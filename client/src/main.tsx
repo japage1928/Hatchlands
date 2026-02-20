@@ -1,16 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import ReactDOM from 'react-dom/client';
+import * as React from 'react';
+import { createRoot } from 'react-dom/client';
 import './index.css';
 import { registerServiceWorker, setupInstallPrompt, isInstalledPWA, getDeviceCapabilities } from './pwa';
 
 function App() {
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [canInstall, setCanInstall] = useState(false);
-  const [installPrompt, setInstallPrompt] = useState<(() => Promise<void>) | null>(null);
-  const [showUpdateBanner, setShowUpdateBanner] = useState(false);
-  const [deviceInfo, setDeviceInfo] = useState(getDeviceCapabilities());
+  const [isOnline, setIsOnline] = React.useState(navigator.onLine);
+  const [canInstall, setCanInstall] = React.useState(false);
+  const [installPrompt, setInstallPrompt] = React.useState<(() => Promise<void>) | null>(null);
+  const [showUpdateBanner, setShowUpdateBanner] = React.useState(false);
+  const [deviceInfo, setDeviceInfo] = React.useState(getDeviceCapabilities());
 
-  useEffect(() => {
+  React.useEffect(() => {
     // Register service worker
     registerServiceWorker({
       onSuccess: () => {
@@ -174,7 +174,7 @@ function App() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <App />
   </React.StrictMode>

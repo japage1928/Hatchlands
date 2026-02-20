@@ -13,6 +13,7 @@ import {
   GenomeSignature,
   AppearanceParams,
   CreatureStatus,
+  AnchorSpecies,
 } from '@hatchlands/shared';
 import {
   SeededRandom,
@@ -195,7 +196,10 @@ export class CreatureGenerator {
   /**
    * Select body parts respecting anchor constraints
    */
-  private selectBodyParts(primary: any, secondary: any | null): AppearanceParams['parts'] {
+  private selectBodyParts(
+    primary: AnchorSpecies,
+    secondary: AnchorSpecies | null
+  ): AppearanceParams['parts'] {
     this.logStep('Selecting body parts');
 
     const anatomy = primary.anatomy;
@@ -257,7 +261,7 @@ export class CreatureGenerator {
   /**
    * Select color palette indices
    */
-  private selectColors(primary: any, secondary: any | null): number[] {
+  private selectColors(primary: AnchorSpecies, secondary: AnchorSpecies | null): number[] {
     this.logStep('Selecting colors');
 
     const primaryPalette = this.rng.choice(primary.colorPalettes);
@@ -274,7 +278,7 @@ export class CreatureGenerator {
   /**
    * Select materials
    */
-  private selectMaterials(primary: any, secondary: any | null): string[] {
+  private selectMaterials(primary: AnchorSpecies, secondary: AnchorSpecies | null): string[] {
     this.logStep('Selecting materials');
 
     const materialCount = this.rng.nextInt(1, 3);

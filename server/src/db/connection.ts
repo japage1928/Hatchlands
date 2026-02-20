@@ -2,7 +2,7 @@
  * Database connection and query utilities
  */
 
-import { Pool, QueryResult } from 'pg';
+import { Pool, QueryResult, QueryResultRow } from 'pg';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -21,7 +21,10 @@ pool.on('error', (err) => {
 /**
  * Execute a database query
  */
-export async function query<T>(text: string, params?: any[]): Promise<QueryResult<T>> {
+export async function query<T extends QueryResultRow>(
+  text: string,
+  params?: any[]
+): Promise<QueryResult<T>> {
   const start = Date.now();
   try {
     const result = await pool.query<T>(text, params);
@@ -37,7 +40,10 @@ export async function query<T>(text: string, params?: any[]): Promise<QueryResul
 /**
  * Execute query and return first row
  */
-export async function queryOne<T>(text: string, params?: any[]): Promise<T | null> {
+export async function queryOne<T extends QueryResultRow>(
+  text: string,
+  params?: any[]
+): Promise<T | null> {
   const result = await query<T>(text, params);
   return result.rows[0] || null;
 }
@@ -45,7 +51,10 @@ export async function queryOne<T>(text: string, params?: any[]): Promise<T | nul
 /**
  * Execute query and return all rows
  */
-export async function queryMany<T>(text: string, params?: any[]): Promise<T[]> {
+export async function queryMany<T extends QueryResultRow>(
+  text: string,
+  params?: any[]
+): Promise<T[]> {
   const result = await query<T>(text, params);
   return result.rows;
 }

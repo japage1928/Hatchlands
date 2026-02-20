@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@hatchlands/shared": ["../shared/dist/index.d.ts"],
+      "@hatchlands/shared/*": ["../shared/dist/*"]
+    }
+  }
+}

@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
 import { Creature } from '@hatchlands/shared';
@@ -11,7 +11,7 @@ interface CreatureViewerProps {
 }
 
 function CreatureMesh({ creature }: { creature: Creature }) {
-  const sceneRef = useRef<THREE.Scene>(null);
+  const sceneRef = useRef<THREE.Scene>(new THREE.Scene());
   const rendererRef = useRef<CreatureRenderer | null>(null);
 
   useEffect(() => {
@@ -42,11 +42,7 @@ export const CreatureViewer: React.FC<CreatureViewerProps> = ({ creature }) => {
         
         <gridHelper args={[10, 10]} />
         
-        {/* Creature rendering would be integrated here */}
-        <mesh>
-          <sphereGeometry args={[1, 32, 32]} />
-          <meshStandardMaterial color="#4488ff" />
-        </mesh>
+        <CreatureMesh creature={creature} />
       </Canvas>
     </div>
   );

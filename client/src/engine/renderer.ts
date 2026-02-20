@@ -5,9 +5,8 @@
  */
 
 import * as THREE from 'three';
-import { Creature, AppearanceParams, AnchorId } from '@hatchlands/shared';
+import { Creature, AppearanceParams } from '@hatchlands/shared';
 import { ANCHOR_SPECIES } from '@hatchlands/shared';
-import { SeededRandom } from '@hatchlands/shared';
 
 export class CreatureRenderer {
   private scene: THREE.Scene;
@@ -29,7 +28,7 @@ export class CreatureRenderer {
     const anchor = ANCHOR_SPECIES[this.creature.primaryAnchor];
     
     // Get color palette
-    const palette = this.getPalette(anchor, params);
+    const palette = this.getPalette(anchor);
 
     // Build body
     this.buildBody(params, palette);
@@ -60,7 +59,7 @@ export class CreatureRenderer {
   /**
    * Get color palette
    */
-  private getPalette(anchor: any, params: AppearanceParams): THREE.Color[] {
+  private getPalette(anchor: any): THREE.Color[] {
     const paletteData = anchor.colorPalettes[0]; // Simplified - would use params.colorIndices
     return paletteData.map((hex: string) => new THREE.Color(hex));
   }
@@ -136,7 +135,7 @@ export class CreatureRenderer {
   /**
    * Build wings
    */
-  private buildWings(params: AppearanceParams, palette: THREE.Color[]): void {
+  private buildWings(_params: AppearanceParams, palette: THREE.Color[]): void {
     const wingGeometry = new THREE.PlaneGeometry(1.5, 2);
     const wingMaterial = new THREE.MeshStandardMaterial({
       color: palette[1] || palette[0],
@@ -161,7 +160,7 @@ export class CreatureRenderer {
   /**
    * Build tail
    */
-  private buildTail(params: AppearanceParams, palette: THREE.Color[]): void {
+  private buildTail(_params: AppearanceParams, palette: THREE.Color[]): void {
     const geometry = new THREE.ConeGeometry(0.2, 1.5, 16);
     const material = new THREE.MeshStandardMaterial({
       color: palette[0],

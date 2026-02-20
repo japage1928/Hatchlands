@@ -5,9 +5,9 @@
  */
 
 import { CreatureGenerator, generateWildCreature } from '../src/engines/generator';
-import { WorldSimulationEngine } from '../src/engines/world';
-import { ANCHOR_SPECIES, isCompatibleForHybrid } from '@hatchlands/shared';
-import { SeededRandom, generateSpawnSeed, getCurrentTimeWindow } from '@hatchlands/shared';
+import { ANCHOR_SPECIES, isCompatibleForHybrid } from '../../shared/src/anchors';
+import { SeededRandom, generateSpawnSeed, getCurrentTimeWindow, hashString } from '../../shared/src/utils';
+import { TIME_WINDOW_DURATION_MS } from '../../shared/src/constants';
 
 console.log('🧪 HATCHLANDS INTEGRATION TEST\n');
 console.log('='.repeat(60));
@@ -18,7 +18,7 @@ console.log('='.repeat(60));
 console.log('\n📦 TEST 1: Deterministic Generation');
 console.log('-'.repeat(60));
 
-const seed1 = 'test-seed-dragon-123';
+const seed1 = hashString('test-seed-dragon-123');
 const config1 = {
   seed: seed1,
   primaryAnchorId: 'dragon' as const,
@@ -138,13 +138,13 @@ console.log('-'.repeat(60));
 
 // Generate two parent creatures
 const parent1Config = {
-  seed: 'parent-1-dragon',
+  seed: hashString('parent-1-dragon'),
   primaryAnchorId: 'dragon' as const,
   generation: 0,
 };
 
 const parent2Config = {
-  seed: 'parent-2-serpent',
+  seed: hashString('parent-2-serpent'),
   primaryAnchorId: 'serpent' as const,
   generation: 0,
 };
@@ -160,7 +160,7 @@ console.log('✓ Parent 2:', parent2.primaryAnchor, '(generation 0)');
 
 // Attempt to breed them
 const offspringConfig = {
-  seed: `offspring-${parent1.id}-${parent2.id}`,
+  seed: hashString(`offspring-${parent1.id}-${parent2.id}`),
   primaryAnchorId: parent1.primaryAnchor,
   secondaryAnchorId: parent2.primaryAnchor,
   generation: Math.max(parent1.lineageHistory.length, parent2.lineageHistory.length) + 1,
@@ -188,7 +188,7 @@ if (offspring.secondaryAnchor && offspring.lineageHistory.length > 0) {
 console.log('\n📦 TEST 5: World Spawn Generation');
 console.log('-'.repeat(60));
 
-const currentTimeWindow = getCurrentTimeWindow();
+const currentTimeWindow = getCurrentTimeWindow(TIME_WINDOW_DURATION_MS);
 console.log('✓ Current time window:', currentTimeWindow);
 
 // Generate spawn seeds for a region
@@ -199,11 +199,11 @@ const testRegion = {
   radius: 5000,
 };
 
-const spawn1Seed = generateSpawnSeed(testRegion.id, currentTimeWindow, 0);
-const spawn2Seed = generateSpawnSeed(testRegion.id, currentTimeWindow, 1);
+const spawn1Seed = generateSpawnSeed(`${testRegion.id}-0`, currentTimeWindow);
+const spawn2Seed = generateSpawnSeed(`${testRegion.id}-1`, currentTimeWindow);
 
-console.log('✓ Spawn seed 1:', spawn1Seed.substring(0, 32) + '...');
-console.log('✓ Spawn seed 2:', spawn2Seed.substring(0, 32) + '...');
+console.log('✓ Spawn seed 1:', spawn1Seed);
+console.log('✓ Spawn seed 2:', spawn2Seed);
 
 // Test that seeds are different
 if (spawn1Seed !== spawn2Seed) {
@@ -213,7 +213,7 @@ if (spawn1Seed !== spawn2Seed) {
 }
 
 // Test that same inputs produce same seed
-const spawn1SeedRepeat = generateSpawnSeed(testRegion.id, currentTimeWindow, 0);
+const spawn1SeedRepeat = generateSpawnSeed(`${testRegion.id}-0`, currentTimeWindow);
 if (spawn1Seed === spawn1SeedRepeat) {
   console.log('✅ PASS: Spawn generation is deterministic');
 } else {
@@ -226,22 +226,22 @@ if (spawn1Seed === spawn1SeedRepeat) {
 console.log('\n📦 TEST 6: Appearance Parameters');
 console.log('-'.repeat(60));
 
-const testCreature = generateWildCreature('test-appearance', 'griffin');
-const appearance = testCreature.appearanceParams;
+const testCreature = generateWildCreature(hashString('test-appearance'), 'griffin');
+const appearance = testCreature.creature.appearanceParams;
 
-console.log('✓ Body parts:', appearance.bodyParts);
-console.log('✓ Colors:', Object.keys(appearance.colors).length, 'color assignments');
-console.log('✓ Materials:', Object.keys(appearance.materials).length, 'material assignments');
-console.log('✓ Size variation:', appearance.sizeVariation);
+console.log('✓ Body parts:', appearance.parts);
+console.log('✓ Colors:', appearance.colorIndices.length, 'color assignments');
+console.log('✓ Materials:', appearance.materials.length, 'material assignments');
+console.log('✓ Size variation:', appearance.scale);
 
 // Validate appearance has required fields
 const hasRequiredFields = 
-  appearance.bodyParts &&
-  appearance.bodyParts.head &&
-  appearance.bodyParts.body &&
-  appearance.colors &&
-  appearance.materials &&
-  typeof appearance.sizeVariation === 'number';
+  appearance.parts &&
+  appearance.parts.head &&
+  appearance.parts.body &&
+  Array.isArray(appearance.colorIndices) &&
+  Array.isArray(appearance.materials) &&
+  typeof appearance.scale === 'number';
 
 if (hasRequiredFields) {
   console.log('✅ PASS: Appearance parameters have all required fields');
@@ -255,10 +255,10 @@ if (hasRequiredFields) {
 console.log('\n📦 TEST 7: Seeded Random Consistency');
 console.log('-'.repeat(60));
 
-const rng1 = new SeededRandom('test-rng-seed');
+const rng1 = new SeededRandom(hashString('test-rng-seed'));
 const values1 = [rng1.next(), rng1.next(), rng1.next()];
 
-const rng2 = new SeededRandom('test-rng-seed');
+const rng2 = new SeededRandom(hashString('test-rng-seed'));
 const values2 = [rng2.next(), rng2.next(), rng2.next()];
 
 console.log('✓ RNG 1:', values1.map(v => v.toFixed(4)));
@@ -278,16 +278,16 @@ if (rngConsistent) {
 console.log('\n📦 TEST 8: Genome Inheritance');
 console.log('-'.repeat(60));
 
-const testParent1 = generateWildCreature('parent-test-1', 'dragon');
-const testParent2 = generateWildCreature('parent-test-2', 'phoenix');
+const testParent1 = generateWildCreature(hashString('parent-test-1'), 'dragon');
+const testParent2 = generateWildCreature(hashString('parent-test-2'), 'phoenix');
 
-console.log('✓ Parent 1 genome traits:', testParent1.genomeSignature.traits.length);
-console.log('✓ Parent 2 genome traits:', testParent2.genomeSignature.traits.length);
+console.log('✓ Parent 1 genome traits:', testParent1.creature.genomeSignature.primaryGenes.length);
+console.log('✓ Parent 2 genome traits:', testParent2.creature.genomeSignature.primaryGenes.length);
 
 // In a real breeding scenario, offspring would inherit traits from both parents
 const hasTraits = 
-  testParent1.genomeSignature.traits.length > 0 &&
-  testParent2.genomeSignature.traits.length > 0;
+  testParent1.creature.genomeSignature.primaryGenes.length > 0 &&
+  testParent2.creature.genomeSignature.primaryGenes.length > 0;
 
 if (hasTraits) {
   console.log('✅ PASS: Creatures have genetic traits for inheritance');
@@ -305,7 +305,7 @@ const dragonAnchor = ANCHOR_SPECIES.dragon;
 console.log('✓ Dragon habitats:', dragonAnchor.biology.habitats);
 console.log('✓ Dragon locomotion:', dragonAnchor.biology.locomotion);
 console.log('✓ Dragon diet:', dragonAnchor.biology.diet);
-console.log('✓ Dragon forbidden parts:', dragonAnchor.forbiddenParts?.length || 0);
+console.log('✓ Dragon forbidden parts:', dragonAnchor.forbidden.parts.length);
 
 const hasValidBiology = 
   dragonAnchor.biology &&
@@ -326,12 +326,12 @@ console.log('\n📦 TEST 10: Multiple Generation Cycles');
 console.log('-'.repeat(60));
 
 const generations = [];
-let currentSeed = 'gen-0-seed';
+let currentSeed = hashString('gen-0-seed');
 
 for (let i = 0; i < 5; i++) {
   const creature = generateWildCreature(currentSeed, 'unicorn');
   generations.push(creature);
-  currentSeed = `gen-${i + 1}-seed`;
+  currentSeed = hashString(`gen-${i + 1}-seed`);
   console.log(`  ✓ Generation ${i}: ${creature.primaryAnchor} (level ${creature.level})`);
 }
 
