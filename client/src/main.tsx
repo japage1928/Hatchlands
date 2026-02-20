@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { createRoot } from 'react-dom/client';
+import { isAxiosError } from 'axios';
 import './index.css';
 import { registerServiceWorker, setupInstallPrompt, isInstalledPWA } from './pwa';
 import { api } from './api/client';
@@ -10,6 +11,23 @@ import { EncounterView } from './components/EncounterView';
 import { Creature, Spawn, Encounter } from '@hatchlands/shared';
 
 type Page = 'home' | 'creatures' | 'explore' | 'marketplace' | 'breeding' | 'encounter';
+
+const getRequestErrorMessage = (err: unknown, fallback: string) => {
+  if (!isAxiosError(err)) {
+    return err instanceof Error ? err.message : fallback;
+  }
+
+  if (err.code === 'ERR_NETWORK') {
+    return 'Cannot reach server. Start the backend on port 3000 or set VITE_API_URL.';
+  }
+
+  const apiError = (err.response?.data as any)?.error;
+  if (typeof apiError === 'string' && apiError.trim()) {
+    return apiError;
+  }
+
+  return err.message || fallback;
+};
 
 function App() {
   const [isOnline, setIsOnline] = React.useState(navigator.onLine);
@@ -61,7 +79,7 @@ function App() {
       }
     } catch (err) {
       console.error('Failed to fetch world data:', err);
-      setWorldError(err instanceof Error ? err.message : 'Failed to load world data');
+      setWorldError(getRequestErrorMessage(err, 'Failed to load world data'));
     } finally {
       setLoadingWorld(false);
     }
@@ -80,7 +98,7 @@ function App() {
       setCurrentEncounter(response);
       setCurrentPage('encounter');
     } catch (err) {
-      setWorldError(err instanceof Error ? err.message : 'Failed to start encounter');
+      setWorldError(getRequestErrorMessage(err, 'Failed to start encounter'));
     }
   }, []);
 

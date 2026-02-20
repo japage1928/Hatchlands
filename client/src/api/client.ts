@@ -10,8 +10,10 @@ class HatchlandsAPI {
   private token: string | null = null;
 
   constructor() {
+    const baseURL = import.meta.env.VITE_API_URL || '/api';
+
     this.client = axios.create({
-      baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
+      baseURL,
       timeout: 10000,
     });
 
