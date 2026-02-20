@@ -25,6 +25,7 @@ export const EncounterView: React.FC<EncounterViewProps> = ({
   const [loading, setLoading] = React.useState(false);
   const [result, setResult] = React.useState<{ success: boolean; message: string } | null>(null);
   const [captureChance] = React.useState(Math.random() * 100); // Random 0-100% base chance
+  const isDemoEncounter = Boolean(encounter?.id?.startsWith('demo-enc-'));
 
   const handleCapture = async () => {
     if (!encounter) return;
@@ -33,6 +34,23 @@ export const EncounterView: React.FC<EncounterViewProps> = ({
     setPhase('result');
 
     try {
+      if (isDemoEncounter) {
+        const success = Math.random() * 100 < captureChance;
+        if (success) {
+          setResult({ success: true, message: 'You caught the creature!' });
+          setPhase('captured');
+          setTimeout(() => {
+            onCaptured?.(spawn.creature.id);
+          }, 1200);
+        } else {
+          setResult({
+            success: false,
+            message: 'The creature escaped! Try again or flee.',
+          });
+        }
+        return;
+      }
+
       const response = await api.captureCreature({
         encounterId: encounter.id,
         spawnId: spawn.id,
@@ -62,6 +80,11 @@ export const EncounterView: React.FC<EncounterViewProps> = ({
 
   const handleFlee = async () => {
     if (!encounter) return;
+
+    if (isDemoEncounter) {
+      onFled?.();
+      return;
+    }
 
     setLoading(true);
     try {

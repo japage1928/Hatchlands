@@ -8,7 +8,7 @@ import { CreatureList } from './components/CreatureList';
 import { BreedingUI } from './components/BreedingUI';
 import { SpawnList } from './components/SpawnList';
 import { EncounterView } from './components/EncounterView';
-import { Creature, Spawn, Encounter } from '@hatchlands/shared';
+import { Creature, Spawn, Encounter, AnchorId, ANCHOR_SPECIES } from '@hatchlands/shared';
 
 type Page = 'home' | 'creatures' | 'explore' | 'marketplace' | 'breeding' | 'encounter';
 
@@ -29,6 +29,79 @@ const getRequestErrorMessage = (err: unknown, fallback: string) => {
   return err.message || fallback;
 };
 
+const createDemoCreature = (
+  id: string,
+  anchor: AnchorId,
+  status: Creature['status'],
+  level: number,
+  seed: number,
+): Creature => {
+  const species = ANCHOR_SPECIES[anchor];
+
+  return {
+    id,
+    seed,
+    primaryAnchor: anchor,
+    genomeSignature: {
+      primaryGenes: [seed % 97, (seed * 3) % 89, (seed * 7) % 83],
+      mutations: [],
+      generation: 0,
+    },
+    appearanceParams: {
+      parts: {
+        body: species.anatomy.bodyParts[0] || 'scaled_body',
+        head: species.anatomy.headTypes[0] || 'horned_head',
+        limbs: species.anatomy.limbTypes.length > 0 ? species.anatomy.limbTypes.slice(0, 2) : ['clawed_legs', 'clawed_legs'],
+        tail: species.anatomy.tailTypes[0],
+        wings: species.anatomy.wingTypes?.slice(0, 2),
+      },
+      colorIndices: [0, 1, 2],
+      materials: species.materials.slice(0, 2),
+      scale: 1,
+      procedural: {
+        roughness: 0.5,
+        metalness: 0.1,
+      },
+    },
+    ownerId: status === 'captured' ? 'demo-player' : undefined,
+    status,
+    lineageHistory: [],
+    capturedAt: status === 'captured' ? Date.now() - 3600_000 : undefined,
+    birthTimestamp: Date.now() - 86_400_000,
+    xp: level * 120,
+    level,
+    nickname: status === 'captured' ? `${species.name} #${id.slice(-2)}` : undefined,
+  };
+};
+
+const buildDemoWorld = () => {
+  const now = Date.now();
+  const creatureA = createDemoCreature('demo-c-001', 'dragon', 'captured', 12, 1001);
+  const creatureB = createDemoCreature('demo-c-002', 'griffin', 'captured', 8, 1002);
+  const spawnA = createDemoCreature('demo-s-001', 'serpent', 'wild', 5, 2001);
+  const spawnB = createDemoCreature('demo-s-002', 'phoenix', 'wild', 9, 2002);
+  const spawnC = createDemoCreature('demo-s-003', 'unicorn', 'wild', 4, 2003);
+
+  const spawns: Spawn[] = [spawnA, spawnB, spawnC].map((creature, index) => ({
+    id: `demo-spawn-${index + 1}`,
+    seed: creature.seed + 500,
+    regionId: 'demo-region',
+    timeWindow: {
+      start: now - 15 * 60_000,
+      end: now + 45 * 60_000,
+    },
+    creature,
+    spawnedAt: now - (index + 1) * 120_000,
+    expiresAt: now + (index + 1) * 900_000,
+    locked: false,
+  }));
+
+  return {
+    creatures: [creatureA, creatureB],
+    spawns,
+  };
+};
+
 function App() {
   const [isOnline, setIsOnline] = React.useState(navigator.onLine);
   const [canInstall, setCanInstall] = React.useState(false);
@@ -43,6 +116,7 @@ function App() {
   const [selectedSpawn, setSelectedSpawn] = React.useState<Spawn | null>(null);
   const [loadingWorld, setLoadingWorld] = React.useState(false);
   const [worldError, setWorldError] = React.useState<string | null>(null);
+  const [isDemoMode, setIsDemoMode] = React.useState(false);
 
   React.useEffect(() => {
     registerServiceWorker({
@@ -68,22 +142,30 @@ function App() {
 
   const fetchWorldData = React.useCallback(async () => {
     if (!isOnline) return;
+    if (isDemoMode) return;
 
     setLoadingWorld(true);
     setWorldError(null);
     try {
       const data = await api.getWorld();
       if (data) {
-        setCreatures((data as any).creatures || []);
-        setSpawns((data as any).spawns || []);
+        const ownedCreatures = (data as any).ownedCreatures || (data as any).creatures || [];
+        const nearbyCreatures = (data as any).nearbyCreatures || (data as any).spawns || [];
+        setCreatures(ownedCreatures);
+        setSpawns(nearbyCreatures);
+        setIsDemoMode(false);
       }
     } catch (err) {
       console.error('Failed to fetch world data:', err);
-      setWorldError(getRequestErrorMessage(err, 'Failed to load world data'));
+      const demoWorld = buildDemoWorld();
+      setCreatures(demoWorld.creatures);
+      setSpawns(demoWorld.spawns);
+      setIsDemoMode(true);
+      setWorldError('Demo mode enabled (no backend server).');
     } finally {
       setLoadingWorld(false);
     }
-  }, [isOnline]);
+  }, [isOnline, isDemoMode]);
 
   React.useEffect(() => {
     if (isOnline) {
@@ -92,6 +174,22 @@ function App() {
   }, [isOnline, fetchWorldData]);
 
   const handleStartEncounter = React.useCallback(async (spawn: Spawn) => {
+    if (isDemoMode) {
+      const now = Date.now();
+      setSelectedSpawn(spawn);
+      setCurrentEncounter({
+        id: `demo-enc-${spawn.id}`,
+        playerId: 'demo-player',
+        spawnId: spawn.id,
+        creatureId: spawn.creature.id,
+        startedAt: now,
+        expiresAt: now + 5 * 60_000,
+        resolved: false,
+      });
+      setCurrentPage('encounter');
+      return;
+    }
+
     try {
       setSelectedSpawn(spawn);
       const response = await api.startEncounter(spawn.id);
@@ -100,14 +198,26 @@ function App() {
     } catch (err) {
       setWorldError(getRequestErrorMessage(err, 'Failed to start encounter'));
     }
-  }, []);
+  }, [isDemoMode]);
 
   const handleCaptured = React.useCallback(() => {
-    fetchWorldData();
+    if (isDemoMode && selectedSpawn) {
+      const capturedCreature: Creature = {
+        ...selectedSpawn.creature,
+        status: 'captured',
+        ownerId: 'demo-player',
+        capturedAt: Date.now(),
+      };
+      setCreatures((prev) => prev.some((c) => c.id === capturedCreature.id) ? prev : [capturedCreature, ...prev]);
+      setSpawns((prev) => prev.filter((s) => s.id !== selectedSpawn.id));
+    } else {
+      fetchWorldData();
+    }
+
     setCurrentPage('creatures');
     setSelectedSpawn(null);
     setCurrentEncounter(null);
-  }, [fetchWorldData]);
+  }, [fetchWorldData, isDemoMode, selectedSpawn]);
 
   const handleFled = React.useCallback(() => {
     setCurrentPage('explore');
