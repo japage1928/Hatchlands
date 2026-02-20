@@ -1,8 +1,7 @@
 import * as React from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
 import { Creature } from '@hatchlands/shared';
-import * as THREE from 'three';
 import { useEffect, useRef } from 'react';
 import { CreatureRenderer } from '../engine/renderer';
 
@@ -11,71 +10,100 @@ interface CreatureViewerProps {
 }
 
 function CreatureMesh({ creature }: { creature: Creature }) {
-  const sceneRef = useRef<THREE.Scene>(new THREE.Scene());
+  const { scene } = useThree();
   const rendererRef = useRef<CreatureRenderer | null>(null);
-  const [animationTime, setAnimationTime] = React.useState(0);
-
-  // Add ambient lighting to the scene
-  useEffect(() => {
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-    const directionalLight1 = new THREE.DirectionalLight(0xffffff, 1);
-    const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.5);
-    
-    directionalLight1.position.set(5, 5, 5);
-    directionalLight2.position.set(-5, 5, -5);
-    
-    sceneRef.current.add(ambientLight, directionalLight1, directionalLight2);
-  }, []);
+  const timeRef = useRef(0);
 
   useEffect(() => {
-    if (sceneRef.current && !rendererRef.current) {
-      rendererRef.current = new CreatureRenderer(sceneRef.current, creature);
-    }
+    rendererRef.current?.dispose();
+    rendererRef.current = new CreatureRenderer(scene, creature);
 
     return () => {
-      if (rendererRef.current) {
-        rendererRef.current.dispose();
-      }
+      rendererRef.current?.dispose();
+      rendererRef.current = null;
     };
-  }, [creature]);
+  }, [scene, creature]);
 
-  // Animation loop
-  useFrame(() => {
-    setAnimationTime(prev => (prev + 0.016) % (Math.PI * 2)); // About 60 FPS
+  useFrame((_, delta) => {
+    const renderer = rendererRef.current;
+    if (!renderer) return;
+
+    timeRef.current += delta;
+    const t = timeRef.current;
+    const group = renderer.getGroup();
+
+    group.position.y = Math.sin(t * 1.8) * 0.06;
+    group.rotation.y = Math.sin(t * 0.55) * 0.18;
+    group.rotation.z = Math.sin(t * 0.9) * 0.03;
+
+    const tail = group.getObjectByName('tail');
+    if (tail) {
+      tail.rotation.y = Math.sin(t * 2.1) * 0.2;
+    }
+
+    const wingLeft = group.getObjectByName('wing-left');
+    const wingRight = group.getObjectByName('wing-right');
+    if (wingLeft && wingRight) {
+      wingLeft.rotation.x = 0.08 + Math.sin(t * 2.6) * 0.08;
+      wingRight.rotation.x = -0.08 - Math.sin(t * 2.6) * 0.08;
+    }
   });
 
-  // Apply subtle animation to creature
-  useEffect(() => {
-    if (sceneRef.current.children.length > 3) { // Skip lights
-      const creature = sceneRef.current.children[3];
-      if (creature instanceof THREE.Group || creature instanceof THREE.Object3D) {
-        // Gentle bobbing motion
-        creature.position.y = Math.sin(animationTime) * 0.1;
-        // Subtle rotation for better visibility
-        creature.rotation.z = Math.cos(animationTime * 0.5) * 0.05;
-      }
-    }
-  }, [animationTime]);
-
-  return <primitive object={sceneRef.current} />;
+  return null;
 }
 
 export const CreatureViewer: React.FC<CreatureViewerProps> = ({ creature }) => {
   return (
-    <div style={{ width: '100%', height: '400px', background: 'linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%)' }}>
-      <Canvas>
-        <PerspectiveCamera makeDefault position={[0, 2, 5]} fov={50} />
-        <OrbitControls 
-          enablePan={true}
-          enableRotate={true}
-          enableZoom={true}
-          autoRotate={true}
-          autoRotateSpeed={2}
-          minDistance={3}
-          maxDistance={10}
+    <div
+      style={{
+        width: '100%',
+        height: '400px',
+        background: 'radial-gradient(circle at 20% 20%, #1f3f6a 0%, #0f1d32 55%, #0a1224 100%)',
+        borderRadius: '14px',
+      }}
+    >
+      <Canvas shadows dpr={[1, 2]}>
+        <color attach="background" args={['#0b1627']} />
+
+        <PerspectiveCamera makeDefault position={[0, 1.25, 5.25]} fov={44} />
+
+        <ambientLight intensity={0.28} />
+        <hemisphereLight args={['#9bc8ff', '#1d2740', 0.35]} />
+
+        <directionalLight
+          castShadow
+          position={[5, 7, 4]}
+          intensity={1.2}
+          shadow-mapSize-width={2048}
+          shadow-mapSize-height={2048}
+          shadow-camera-near={0.1}
+          shadow-camera-far={20}
+          shadow-camera-left={-6}
+          shadow-camera-right={6}
+          shadow-camera-top={6}
+          shadow-camera-bottom={-6}
         />
-        
+        <directionalLight position={[-4, 2.5, -3]} intensity={0.45} />
+
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.12, 0]} receiveShadow>
+          <planeGeometry args={[20, 20]} />
+          <shadowMaterial opacity={0.26} />
+        </mesh>
+
         <CreatureMesh creature={creature} />
+
+        <OrbitControls
+          enablePan={false}
+          enableRotate
+          enableZoom
+          autoRotate
+          autoRotateSpeed={1.25}
+          minDistance={3}
+          maxDistance={8}
+          maxPolarAngle={Math.PI * 0.55}
+          minPolarAngle={Math.PI * 0.2}
+          target={[0, 0.1, 0]}
+        />
       </Canvas>
     </div>
   );
