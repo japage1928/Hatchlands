@@ -8,8 +8,8 @@
     "moduleResolution": "node",
     "baseUrl": ".",
     "paths": {
-      "@hatchlands/shared": ["../shared/src/index.ts", "../shared/dist/index.d.ts"],
-      "@hatchlands/shared/*": ["../shared/src/*", "../shared/dist/*"]
+      "@hatchlands/shared": ["../shared/dist/index.d.ts", "../shared/src/index.ts"],
+      "@hatchlands/shared/*": ["../shared/dist/*", "../shared/src/*"]
     },
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
