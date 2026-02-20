@@ -36,6 +36,7 @@ export const BottomNav: React.FC = () => {
 ```
 
 ### Swipeable Card
+{% raw %}
 ```tsx
 // src/components/SwipeCard.tsx
 import React, { useRef, useState } from 'react';
@@ -102,8 +103,10 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({
   );
 };
 ```
+{% endraw %}
 
 ### Pull to Refresh
+{% raw %}
 ```tsx
 // src/components/PullToRefresh.tsx
 import React, { useState, useRef } from 'react';
@@ -169,6 +172,7 @@ export const PullToRefresh: React.FC<PullToRefreshProps> = ({
   );
 };
 ```
+{% endraw %}
 
 ### Haptic Feedback
 ```tsx
