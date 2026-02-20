@@ -69,11 +69,11 @@ git push origin main
 
 **Cause:** Wrong base path in vite.config.ts
 
-**Fix for GitHub Pages:**
+**Fix for GitHub Pages (username.github.io/repo-name):**
 ```typescript
 // client/vite.config.ts
 export default defineConfig({
-  base: '/your-repo-name/', // Add your GitHub repo name
+  base: '/Hatchlands/', // Must match your repository name
   // ... rest of config
 });
 ```
@@ -82,6 +82,18 @@ export default defineConfig({
 ```typescript
 base: '/', // Use root path
 ```
+
+### ❌ Build succeeds but shows README/documentation instead of app
+
+**Cause:** GitHub Pages is rendering markdown files with Jekyll instead of serving your React app
+
+**Fix:** The `.nojekyll` file has been added to prevent this. Ensure:
+1. File exists: `client/public/.nojekyll` ✅
+2. Workflow adds it to dist: `touch client/dist/.nojekyll` ✅
+3. Correct base path in vite.config.ts ✅
+
+After pushing changes, your app will properly load at:
+`https://yourusername.github.io/Hatchlands/`
 
 ### ❌ Build succeeds but no page appears
 

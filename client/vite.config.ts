@@ -62,5 +62,5 @@ export default defineConfig({
     minify: 'terser',
     sourcemap: false,
   },
-  base: '/', // Change to '/your-repo-name/' for GitHub Pages if not using custom domain
+  base: '/Hatchlands/', // GitHub Pages path: https://username.github.io/Hatchlands/
 });

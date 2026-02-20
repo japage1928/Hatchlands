@@ -38,6 +38,9 @@ jobs:
         env:
           VITE_API_URL: ${{ secrets.API_URL || 'http://localhost:3000/api' }}
 
+      - name: Add .nojekyll file
+        run: touch client/dist/.nojekyll
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
