@@ -1,5 +1,36 @@
 # GitHub Actions Build Troubleshooting
 
+## ⚠️ "Pages Build and Deployment Failed" - Quick Fix
+
+**This is the #1 issue!** Follow these steps in order:
+
+### Step 1: Enable GitHub Pages
+1. Go to your repository on GitHub
+2. Click **Settings** (top menu)
+3. Click **Pages** (left sidebar)
+4. Under "Build and deployment":
+   - **Source**: Change to **"GitHub Actions"**
+   - ❌ NOT "Deploy from a branch"
+5. Click **Save**
+
+### Step 2: Fix Permissions
+1. Still in **Settings**, click **Actions** > **General**
+2. Scroll to bottom: **Workflow permissions**
+3. Select: **"Read and write permissions"**
+4. Save
+
+### Step 3: Re-run Workflow
+1. Go to **Actions** tab
+2. Click your failed workflow run
+3. Click **Re-run all jobs** (top right)
+
+### Step 4: Check Repository Visibility
+- GitHub Pages is **free for public repositories**
+- Private repos need GitHub Pro, Team, or Enterprise
+- Check: **Settings** > scroll to bottom > **Danger Zone** > Visibility
+
+---
+
 ## Common Build Failure Reasons
 
 ### 1. ✅ **FIXED: Workspace Build Order**
@@ -62,18 +93,35 @@ Fix any type errors before pushing.
 
 **Note:** App will still work; icons are optional for testing.
 
-### 6. **GitHub Pages Not Enabled**
-**Symptom:** Workflow succeeds but no deployment
+### 6. **GitHub Pages Not Enabled or Misconfigured** ⭐ COMMON
+**Symptom:** "Pages build and deployment failed" or workflow succeeds but no deployment
 
-**Solution:**
+**Solution - MUST DO THIS:**
 1. Go to repository **Settings** > **Pages**
-2. Set Source to: **GitHub Actions**
-3. Save and re-run workflow
+2. Under "Build and deployment":
+   - **Source**: Select **"GitHub Actions"** (not "Deploy from a branch")
+3. Save changes
+4. **Actions** tab > Re-run the failed workflow
+
+**If still failing:**
+- Check repository is **public** (or you have GitHub Pro/Enterprise for private repos)
+- Verify you have admin access to the repository
+- Check **Actions** > **General** > **Workflow permissions** is set to "Read and write permissions"
 
 ### 7. **Permissions Issues**
-**Symptom:** `Resource not accessible by integration`
+**Symptom:** `Resource not accessible by integration` or `Error: HttpError: Resource not accessible by integration`
 
-**Solution:** Check workflow has correct permissions:
+**Solutions:**
+
+**Option A - Repository Settings (Recommended):**
+1. Go to **Settings** > **Actions** > **General**
+2. Scroll to **Workflow permissions**
+3. Select: **"Read and write permissions"**
+4. Check: **"Allow GitHub Actions to create and approve pull requests"**
+5. Click **Save**
+
+**Option B - Check Workflow File:**
+Ensure permissions are set:
 ```yaml
 permissions:
   contents: read
