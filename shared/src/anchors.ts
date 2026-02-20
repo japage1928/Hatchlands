@@ -5,7 +5,7 @@
  * All creatures are constrained by these biological rules.
  */
 
-import { AnchorSpecies, AnchorId } from '@hatchlands/shared';
+import { AnchorSpecies, AnchorId } from './types';
 
 export const ANCHOR_SPECIES: Record<AnchorId, AnchorSpecies> = {
   dragon: {
