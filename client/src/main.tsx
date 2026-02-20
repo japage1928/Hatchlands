@@ -8,7 +8,7 @@ import { CreatureList } from './components/CreatureList';
 import { BreedingUI } from './components/BreedingUI';
 import { SpawnList } from './components/SpawnList';
 import { EncounterView } from './components/EncounterView';
-import { Creature, Spawn, Encounter, AnchorId, ANCHOR_SPECIES } from '@hatchlands/shared';
+import { Creature, Spawn, Encounter, AnchorId, ANCHOR_SPECIES, deriveOffspringSeed, predictOffspringBlueprint } from '@hatchlands/shared';
 import { getAnchorDisplayName } from './utils/anchors';
 
 type Page = 'home' | 'creatures' | 'explore' | 'marketplace' | 'breeding' | 'encounter';
@@ -105,66 +105,22 @@ const buildDemoWorld = () => {
 
 const createDemoOffspring = (parentA: Creature, parentB: Creature): Creature => {
   const now = Date.now();
-  const seed = (parentA.seed * 31 + parentB.seed * 17 + now) % 1_000_000_007;
-  const primaryAnchor = seed % 2 === 0 ? parentA.primaryAnchor : parentB.primaryAnchor;
-  const secondaryAnchor = parentA.primaryAnchor === parentB.primaryAnchor
-    ? undefined
-    : (primaryAnchor === parentA.primaryAnchor ? parentB.primaryAnchor : parentA.primaryAnchor);
-
-  const parentALimbs = parentA.appearanceParams.parts.limbs || [];
-  const parentBLimbs = parentB.appearanceParams.parts.limbs || [];
-  const mergedLimbs = [...parentALimbs.slice(0, 1), ...parentBLimbs.slice(0, 1), ...parentALimbs.slice(1, 2), ...parentBLimbs.slice(1, 2)]
-    .filter(Boolean)
-    .slice(0, 4);
-
-  const aColors = parentA.appearanceParams.colorIndices || [0, 1, 2];
-  const bColors = parentB.appearanceParams.colorIndices || [0, 1, 2];
-  const colorIndices = [
-    aColors[0] ?? 0,
-    bColors[1] ?? aColors[1] ?? 1,
-    ((aColors[2] ?? 2) + (bColors[2] ?? 2)) % 3,
-  ];
+  const seed = deriveOffspringSeed(parentA, parentB, now);
+  const blueprint = predictOffspringBlueprint(parentA, parentB, seed);
 
   return {
     id: `demo-offspring-${now}`,
-    seed,
-    primaryAnchor,
-    secondaryAnchor,
-    genomeSignature: {
-      primaryGenes: [...parentA.genomeSignature.primaryGenes.slice(0, 3)],
-      secondaryGenes: [...(parentB.genomeSignature.primaryGenes || []).slice(0, 3)],
-      mutations: [seed % 13],
-      generation: Math.max(parentA.genomeSignature.generation, parentB.genomeSignature.generation) + 1,
-    },
-    appearanceParams: {
-      parts: {
-        body: seed % 3 === 0 ? parentB.appearanceParams.parts.body : parentA.appearanceParams.parts.body,
-        head: seed % 5 === 0 ? parentA.appearanceParams.parts.head : parentB.appearanceParams.parts.head,
-        limbs: mergedLimbs.length > 0 ? mergedLimbs : ['clawed_legs', 'clawed_legs'],
-        tail: seed % 2 === 0
-          ? (parentA.appearanceParams.parts.tail || parentB.appearanceParams.parts.tail)
-          : (parentB.appearanceParams.parts.tail || parentA.appearanceParams.parts.tail),
-        wings: (() => {
-          const wingsA = parentA.appearanceParams.parts.wings || [];
-          const wingsB = parentB.appearanceParams.parts.wings || [];
-          if (wingsA.length === 0 && wingsB.length === 0) return undefined;
-          return [...wingsA.slice(0, 1), ...wingsB.slice(0, 1)].filter(Boolean);
-        })(),
-      },
-      colorIndices,
-      materials: [...new Set([...(parentA.appearanceParams.materials || []), ...(parentB.appearanceParams.materials || [])])].slice(0, 3),
-      scale: Math.max(0.85, Math.min(1.2, (parentA.appearanceParams.scale + parentB.appearanceParams.scale) / 2)),
-      procedural: {
-        roughness: ((parentA.appearanceParams.procedural.roughness || 0.5) + (parentB.appearanceParams.procedural.roughness || 0.5)) / 2,
-        metalness: ((parentA.appearanceParams.procedural.metalness || 0.1) + (parentB.appearanceParams.procedural.metalness || 0.1)) / 2,
-      },
-    },
+    seed: blueprint.seed,
+    primaryAnchor: blueprint.primaryAnchor,
+    secondaryAnchor: blueprint.secondaryAnchor,
+    genomeSignature: blueprint.genomeSignature,
+    appearanceParams: blueprint.appearanceParams,
     ownerId: 'demo-player',
     status: 'captured',
     lineageHistory: [
       {
         creatureId: `demo-offspring-${now}`,
-        generation: Math.max(parentA.genomeSignature.generation, parentB.genomeSignature.generation) + 1,
+        generation: blueprint.genomeSignature.generation,
         timestamp: now,
         parentA: parentA.id,
         parentB: parentB.id,
@@ -174,7 +130,7 @@ const createDemoOffspring = (parentA: Creature, parentB: Creature): Creature => 
     birthTimestamp: now,
     xp: 0,
     level: 1,
-    nickname: `${getAnchorDisplayName(primaryAnchor)} Cub`,
+    nickname: `${getAnchorDisplayName(blueprint.primaryAnchor)} Cub`,
   };
 };
 

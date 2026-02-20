@@ -60,14 +60,22 @@ export function getNextLevelInfo(creature: Creature) {
  */
 export function getCreatureStats(creature: Creature) {
   const levelBonus = (creature.level - 1) * LEVEL_CONFIG.STAT_GAIN_PER_LEVEL;
+  const genes = creature.appearanceParams.procedural || {};
+  const vitality = typeof genes.geneVitality === 'number' ? genes.geneVitality : 0.5;
+  const power = typeof genes.genePower === 'number' ? genes.genePower : 0.5;
+  const defenseFactor = typeof genes.geneDefense === 'number' ? genes.geneDefense : 0.5;
+  const agility = typeof genes.geneAgility === 'number' ? genes.geneAgility : 0.5;
+  const intellect = typeof genes.geneIntellect === 'number' ? genes.geneIntellect : 0.5;
+  const spirit = typeof genes.geneSpirit === 'number' ? genes.geneSpirit : 0.5;
+  const g = (v: number) => 0.7 + Math.max(0, Math.min(1.25, v)) * 0.8;
   
   return {
-    health: Math.floor(50 + levelBonus * 5),
-    attack: Math.floor(10 + levelBonus * 1.2),
-    defense: Math.floor(8 + levelBonus * 1),
-    speed: Math.floor(12 + levelBonus * 0.8),
-    spAtk: Math.floor(9 + levelBonus * 1.1),
-    spDef: Math.floor(8 + levelBonus * 1),
+    health: Math.floor((50 + levelBonus * 5) * g(vitality)),
+    attack: Math.floor((10 + levelBonus * 1.2) * g(power)),
+    defense: Math.floor((8 + levelBonus * 1) * g(defenseFactor)),
+    speed: Math.floor((12 + levelBonus * 0.8) * g(agility)),
+    spAtk: Math.floor((9 + levelBonus * 1.1) * g(intellect)),
+    spDef: Math.floor((8 + levelBonus * 1) * g(spirit)),
   };
 }
 

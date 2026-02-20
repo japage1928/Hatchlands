@@ -28,7 +28,7 @@ const MODEL_NAME_BY_ANCHOR: Record<Creature['primaryAnchor'], string> = {
   manticore: 'beast',
   leviathan: 'mind',
   roc: 'spirit',
-  behemoth: 'drake',
+  behemoth: 'behemoth',
 };
 
 function disposeObject3D(object: THREE.Object3D): void {

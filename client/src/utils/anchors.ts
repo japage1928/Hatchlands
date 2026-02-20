@@ -15,7 +15,7 @@ export const ANCHOR_DISPLAY_NAME: Record<AnchorId, string> = {
   manticore: 'Beast',
   leviathan: 'Mind',
   roc: 'Spirit',
-  behemoth: 'Drake',
+  behemoth: 'Behemoth',
 };
 
 export function getAnchorDisplayName(anchor: AnchorId): string {

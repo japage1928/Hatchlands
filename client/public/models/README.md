@@ -18,7 +18,7 @@ Expected filenames:
 - `beast.glb`
 - `mind.glb`
 - `spirit.glb`
-- `drake.glb`
+- `behemoth.glb` (optional)
 
 Behavior:
 
@@ -42,6 +42,6 @@ Current anchor mapping:
 12. `manticore -> beast`
 13. `leviathan -> mind`
 14. `roc -> spirit`
-15. `behemoth -> drake`
+15. `behemoth -> behemoth`
 
 Any extra image beyond these 15 is ignored by the current mapping.
