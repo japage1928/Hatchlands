@@ -1,14 +1,16 @@
 import * as React from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
-import { registerServiceWorker, setupInstallPrompt, isInstalledPWA, getDeviceCapabilities } from './pwa';
+import { registerServiceWorker, setupInstallPrompt, isInstalledPWA } from './pwa';
+
+type Page = 'home' | 'creatures' | 'explore' | 'marketplace';
 
 function App() {
   const [isOnline, setIsOnline] = React.useState(navigator.onLine);
   const [canInstall, setCanInstall] = React.useState(false);
   const [installPrompt, setInstallPrompt] = React.useState<(() => Promise<void>) | null>(null);
   const [showUpdateBanner, setShowUpdateBanner] = React.useState(false);
-  const [deviceInfo, setDeviceInfo] = React.useState(getDeviceCapabilities());
+  const [currentPage, setCurrentPage] = React.useState<Page>('home');
 
   React.useEffect(() => {
     // Register service worker
@@ -32,9 +34,6 @@ function App() {
       setCanInstall(true);
       setInstallPrompt(() => promptFn);
     });
-
-    // Update device info
-    setDeviceInfo(getDeviceCapabilities());
   }, []);
 
   const handleInstall = async () => {
@@ -85,85 +84,92 @@ function App() {
           </section>
         )}
 
-        <section className="info">
-          <h2>Welcome to Hatchlands</h2>
-          <p>
-            Hatchlands is a location-based multiplayer creature ecosystem where you discover,
-            capture, breed, and trade persistent organisms in a shared world.
-          </p>
-          <ul>
-            <li>✨ 15 Anchor Species with unique biology</li>
-            <li>🧬 Deterministic genetic system</li>
-            <li>🌍 Persistent shared world</li>
-            <li>💎 True creature ownership</li>
-            <li>🔬 Breeding & lineage system</li>
-            <li>🏪 Player-driven marketplace</li>
-          </ul>
-        </section>
+        {/* Home Page */}
+        {currentPage === 'home' && (
+          <>
+            <section className="info">
+              <h2>Welcome to Hatchlands</h2>
+              <p>
+                Hatchlands is a location-based multiplayer creature ecosystem where you discover,
+                capture, breed, and trade persistent organisms in a shared world.
+              </p>
+              <ul>
+                <li>✨ 15 Anchor Species with unique biology</li>
+                <li>🧬 Deterministic genetic system</li>
+                <li>🌍 Persistent shared world</li>
+                <li>💎 True creature ownership</li>
+                <li>🔬 Breeding & lineage system</li>
+                <li>🏪 Player-driven marketplace</li>
+              </ul>
+            </section>
 
-        <section className="status">
-          <h2>System Status</h2>
-          <div className="status-grid">
-            <div className="status-item">
-              <strong>Server:</strong> {isOnline ? 'Ready' : 'Offline'}
-            </div>
-            <div className="status-item">
-              <strong>Database:</strong> PostgreSQL
-            </div>
-            <div className="status-item">
-              <strong>Anchors:</strong> 15 Species
-            </div>
-            <div className="status-item">
-              <strong>Engine:</strong> Deterministic
-            </div>
-          </div>
-        </section>
+            <section className="actions">
+              <button 
+                className="btn-primary touch-target"
+                onClick={() => setCurrentPage('explore')}
+              >
+                🗺️ Explore World
+              </button>
+              <button 
+                className="btn-primary touch-target"
+                onClick={() => setCurrentPage('creatures')}
+              >
+                🎒 My Creatures
+              </button>
+              <button 
+                className="btn-primary touch-target"
+                onClick={() => setCurrentPage('marketplace')}
+              >
+                🏪 Marketplace
+              </button>
+            </section>
+          </>
+        )}
 
-        <section className="device-info">
-          <h2>Device Capabilities</h2>
-          <div className="status-grid">
-            <div className="status-item">
-              <strong>Touch:</strong> {deviceInfo.isTouchDevice ? '✓' : '✗'}
-            </div>
-            <div className="status-item">
-              <strong>Offline:</strong> {deviceInfo.hasServiceWorker ? '✓' : '✗'}
-            </div>
-            <div className="status-item">
-              <strong>Location:</strong> {deviceInfo.hasGeolocation ? '✓' : '✗'}
-            </div>
-            <div className="status-item">
-              <strong>Share:</strong> {deviceInfo.hasShare ? '✓' : '✗'}
-            </div>
-          </div>
-        </section>
+        {/* My Creatures Page */}
+        {currentPage === 'creatures' && (
+          <section className="creatures-page">
+            <h2>🎒 My Creatures</h2>
+            <p>Your creature collection will appear here.</p>
+            <p className="coming-soon">Coming soon...</p>
+            <button 
+              className="btn-primary"
+              onClick={() => setCurrentPage('home')}
+            >
+              ← Back
+            </button>
+          </section>
+        )}
 
-        <section className="next-steps">
-          <h2>Next Steps</h2>
-          <ol>
-            <li>Set up the database using <code>database/schema.sql</code></li>
-            <li>Configure environment variables in <code>server/.env</code></li>
-            <li>Install dependencies: <code>npm install</code></li>
-            <li>Start the server: <code>npm run dev:server</code></li>
-            <li>
-              {deviceInfo.isTouchDevice 
-                ? 'Open on your device and tap "Add to Home Screen"'
-                : 'Test mobile features using browser dev tools'}
-            </li>
-          </ol>
-        </section>
+        {/* Explore World Page */}
+        {currentPage === 'explore' && (
+          <section className="explore-page">
+            <h2>🗺️ Explore World</h2>
+            <p>Discover creatures in the world around you.</p>
+            <p className="coming-soon">Map and creature discovery coming soon...</p>
+            <button 
+              className="btn-primary"
+              onClick={() => setCurrentPage('home')}
+            >
+              ← Back
+            </button>
+          </section>
+        )}
 
-        {/* Touch-friendly action buttons */}
-        <section className="actions">
-          <button className="btn-primary touch-target">
-            🗺️ Explore World
-          </button>
-          <button className="btn-primary touch-target">
-            🎒 My Creatures
-          </button>
-          <button className="btn-primary touch-target">
-            🏪 Marketplace
-          </button>
-        </section>
+        {/* Marketplace Page */}
+        {currentPage === 'marketplace' && (
+          <section className="marketplace-page">
+            <h2>🏪 Marketplace</h2>
+            <p>Trade creatures with other players.</p>
+            <p className="coming-soon">Trading and marketplace coming soon...</p>
+            <button 
+              className="btn-primary"
+              onClick={() => setCurrentPage('home')}
+            >
+              ← Back
+            </button>
+          </section>
+        )}
       </main>
 
       <footer>
