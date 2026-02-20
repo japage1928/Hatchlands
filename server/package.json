@@ -8,7 +8,8 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "migrate": "node dist/db/migrate.js",
-    "test": "jest"
+    "test": "jest",
+    "test:integration": "ts-node test/integration.test.ts"
   },
   "dependencies": {
     "@hatchlands/shared": "file:../shared",
@@ -29,6 +30,7 @@
     "@types/jsonwebtoken": "^9.0.5",
     "@types/cors": "^2.8.17",
     "typescript": "^5.3.3",
+    "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "jest": "^29.7.0",
     "@types/jest": "^29.5.11"
