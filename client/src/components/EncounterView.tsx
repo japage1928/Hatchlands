@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Spawn, Encounter } from '@hatchlands/shared';
 import { api } from '../api/client';
 import { CreatureViewer } from './CreatureViewer';
+import { getAnchorDisplayName } from '../utils/anchors';
 import './styles/EncounterView.css';
 
 interface EncounterViewProps {
@@ -110,9 +111,9 @@ export const EncounterView: React.FC<EncounterViewProps> = ({
           <div className="wild-creature">
             <CreatureViewer creature={spawn.creature} />
             <div className="creature-label">
-              <h3>{spawn.creature.primaryAnchor}</h3>
+              <h3>{getAnchorDisplayName(spawn.creature.primaryAnchor)}</h3>
               {spawn.creature.secondaryAnchor && (
-                <span className="hybrid">Hybrid: {spawn.creature.secondaryAnchor}</span>
+                <span className="hybrid">Hybrid: {getAnchorDisplayName(spawn.creature.secondaryAnchor)}</span>
               )}
             </div>
           </div>
@@ -122,7 +123,7 @@ export const EncounterView: React.FC<EncounterViewProps> = ({
         {phase === 'action' && (
           <div className="encounter-actions">
             <div className="action-info">
-              <p>A wild <strong>{spawn.creature.primaryAnchor}</strong> appeared!</p>
+              <p>A wild <strong>{getAnchorDisplayName(spawn.creature.primaryAnchor)}</strong> appeared!</p>
               <div className="capture-info">
                 <div className="info-item">
                   <span className="label">Capture Difficulty:</span>

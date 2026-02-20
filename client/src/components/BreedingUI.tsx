@@ -1,15 +1,22 @@
 import * as React from 'react';
 import { Creature } from '@hatchlands/shared';
 import { api } from '../api/client';
+import { getAnchorDisplayName } from '../utils/anchors';
 import './styles/BreedingUI.css';
 
 interface BreedingUIProps {
   creatures: Creature[];
   onBreedingStarted?: () => void;
   onClose?: () => void;
+  onStartBreeding?: (parentA: Creature, parentB: Creature) => Promise<void> | void;
 }
 
-export const BreedingUI: React.FC<BreedingUIProps> = ({ creatures, onBreedingStarted, onClose }) => {
+export const BreedingUI: React.FC<BreedingUIProps> = ({
+  creatures,
+  onBreedingStarted,
+  onClose,
+  onStartBreeding,
+}) => {
   const [selectedA, setSelectedA] = React.useState<Creature | null>(null);
   const [selectedB, setSelectedB] = React.useState<Creature | null>(null);
   const [loading, setLoading] = React.useState(false);
@@ -30,10 +37,14 @@ export const BreedingUI: React.FC<BreedingUIProps> = ({ creatures, onBreedingSta
     setSuccess(null);
 
     try {
-      await api.startBreeding({
-        parentAId: selectedA.id,
-        parentBId: selectedB.id,
-      });
+      if (onStartBreeding) {
+        await onStartBreeding(selectedA, selectedB);
+      } else {
+        await api.startBreeding({
+          parentAId: selectedA.id,
+          parentBId: selectedB.id,
+        });
+      }
 
       setSuccess('🥚 Breeding started! Check back soon to collect your offspring.');
       setSelectedA(null);
@@ -71,7 +82,7 @@ export const BreedingUI: React.FC<BreedingUIProps> = ({ creatures, onBreedingSta
                   onClick={() => setSelectedA(creature)}
                 >
                   <div className="selector-name">
-                    {creature.nickname || creature.primaryAnchor}
+                    {creature.nickname || getAnchorDisplayName(creature.primaryAnchor)}
                   </div>
                   <div className="selector-meta">
                     Lvl {creature.level} • Gen {creature.genomeSignature.generation}
@@ -96,7 +107,7 @@ export const BreedingUI: React.FC<BreedingUIProps> = ({ creatures, onBreedingSta
                     onClick={() => setSelectedB(creature)}
                   >
                     <div className="selector-name">
-                      {creature.nickname || creature.primaryAnchor}
+                      {creature.nickname || getAnchorDisplayName(creature.primaryAnchor)}
                     </div>
                     <div className="selector-meta">
                       Lvl {creature.level} • Gen {creature.genomeSignature.generation}
@@ -115,12 +126,12 @@ export const BreedingUI: React.FC<BreedingUIProps> = ({ creatures, onBreedingSta
             <div className="preview-title">Breeding Preview</div>
             <div className="preview-parents">
               <div className="parent-preview">
-                <strong>{selectedA.primaryAnchor}</strong>
+                <strong>{getAnchorDisplayName(selectedA.primaryAnchor)}</strong>
                 <small>Lvl {selectedA.level}</small>
               </div>
               <div className="preview-arrow">♡</div>
               <div className="parent-preview">
-                <strong>{selectedB.primaryAnchor}</strong>
+                <strong>{getAnchorDisplayName(selectedB.primaryAnchor)}</strong>
                 <small>Lvl {selectedB.level}</small>
               </div>
             </div>

@@ -9,6 +9,7 @@ import { BreedingUI } from './components/BreedingUI';
 import { SpawnList } from './components/SpawnList';
 import { EncounterView } from './components/EncounterView';
 import { Creature, Spawn, Encounter, AnchorId, ANCHOR_SPECIES } from '@hatchlands/shared';
+import { getAnchorDisplayName } from './utils/anchors';
 
 type Page = 'home' | 'creatures' | 'explore' | 'marketplace' | 'breeding' | 'encounter';
 
@@ -70,7 +71,7 @@ const createDemoCreature = (
     birthTimestamp: Date.now() - 86_400_000,
     xp: level * 120,
     level,
-    nickname: status === 'captured' ? `${species.name} #${id.slice(-2)}` : undefined,
+    nickname: status === 'captured' ? `${getAnchorDisplayName(anchor)} #${id.slice(-2)}` : undefined,
   };
 };
 
@@ -99,6 +100,60 @@ const buildDemoWorld = () => {
   return {
     creatures: [creatureA, creatureB],
     spawns,
+  };
+};
+
+const createDemoOffspring = (parentA: Creature, parentB: Creature): Creature => {
+  const now = Date.now();
+  const seed = (parentA.seed * 31 + parentB.seed * 17 + now) % 1_000_000_007;
+  const primaryAnchor = Math.random() > 0.5 ? parentA.primaryAnchor : parentB.primaryAnchor;
+  const secondaryAnchor = parentA.primaryAnchor === parentB.primaryAnchor
+    ? undefined
+    : (Math.random() > 0.5 ? parentA.primaryAnchor : parentB.primaryAnchor);
+
+  return {
+    id: `demo-offspring-${now}`,
+    seed,
+    primaryAnchor,
+    secondaryAnchor,
+    genomeSignature: {
+      primaryGenes: [...parentA.genomeSignature.primaryGenes.slice(0, 3)],
+      secondaryGenes: [...(parentB.genomeSignature.primaryGenes || []).slice(0, 3)],
+      mutations: [seed % 13],
+      generation: Math.max(parentA.genomeSignature.generation, parentB.genomeSignature.generation) + 1,
+    },
+    appearanceParams: {
+      parts: {
+        body: parentA.appearanceParams.parts.body,
+        head: parentB.appearanceParams.parts.head,
+        limbs: parentA.appearanceParams.parts.limbs.slice(0, 2),
+        tail: parentA.appearanceParams.parts.tail || parentB.appearanceParams.parts.tail,
+        wings: parentA.appearanceParams.parts.wings || parentB.appearanceParams.parts.wings,
+      },
+      colorIndices: [0, 1, 2],
+      materials: [...new Set([...(parentA.appearanceParams.materials || []), ...(parentB.appearanceParams.materials || [])])].slice(0, 3),
+      scale: Math.max(0.85, Math.min(1.2, (parentA.appearanceParams.scale + parentB.appearanceParams.scale) / 2)),
+      procedural: {
+        roughness: ((parentA.appearanceParams.procedural.roughness || 0.5) + (parentB.appearanceParams.procedural.roughness || 0.5)) / 2,
+        metalness: ((parentA.appearanceParams.procedural.metalness || 0.1) + (parentB.appearanceParams.procedural.metalness || 0.1)) / 2,
+      },
+    },
+    ownerId: 'demo-player',
+    status: 'captured',
+    lineageHistory: [
+      {
+        creatureId: `demo-offspring-${now}`,
+        generation: Math.max(parentA.genomeSignature.generation, parentB.genomeSignature.generation) + 1,
+        timestamp: now,
+        parentA: parentA.id,
+        parentB: parentB.id,
+      },
+    ],
+    capturedAt: now,
+    birthTimestamp: now,
+    xp: 0,
+    level: 1,
+    nickname: `${getAnchorDisplayName(primaryAnchor)} Cub`,
   };
 };
 
@@ -236,6 +291,11 @@ function App() {
     window.location.reload();
   };
 
+  const handleDemoBreeding = React.useCallback(async (parentA: Creature, parentB: Creature) => {
+    const offspring = createDemoOffspring(parentA, parentB);
+    setCreatures((prev) => [offspring, ...prev]);
+  }, []);
+
   const navigateTo = (page: Page) => {
     if (page === 'explore' || page === 'creatures' || page === 'marketplace') {
       fetchWorldData();
@@ -345,6 +405,7 @@ function App() {
                 <BreedingUI
                   creatures={creatures}
                   onBreedingStarted={fetchWorldData}
+                  onStartBreeding={isDemoMode ? handleDemoBreeding : undefined}
                   onClose={() => setCurrentPage('creatures')}
                 />
               </section>

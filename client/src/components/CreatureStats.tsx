@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Creature } from '@hatchlands/shared';
 import { getNextLevelInfo, getCreatureStats, getCreatureRarity } from '../systems/progression';
+import { getAnchorDisplayName } from '../utils/anchors';
 import './styles/CreatureStats.css';
 
 interface CreatureStatsProps {
@@ -18,7 +19,7 @@ export const CreatureStats: React.FC<CreatureStatsProps> = ({ creature, showLeve
       {/* Header with name and rarity */}
       <div className="stats-header">
         <div className="stats-title">
-          <h3>{creature.nickname || creature.primaryAnchor}</h3>
+          <h3>{creature.nickname || getAnchorDisplayName(creature.primaryAnchor)}</h3>
           <span className="rarity-badge">{rarity}</span>
         </div>
         <div className="level-badge">
@@ -95,7 +96,7 @@ export const CreatureStats: React.FC<CreatureStatsProps> = ({ creature, showLeve
         {creature.secondaryAnchor && (
           <div className="genetics-item">
             <span className="label">Hybrid Species:</span>
-            <span className="value">{creature.secondaryAnchor}</span>
+            <span className="value">{getAnchorDisplayName(creature.secondaryAnchor)}</span>
           </div>
         )}
       </div>

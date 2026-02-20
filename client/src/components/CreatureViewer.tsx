@@ -157,8 +157,9 @@ function SpriteCreatureMesh({ texture }: { texture: THREE.Texture }) {
 
 export const CreatureViewer: React.FC<CreatureViewerProps> = ({ creature }) => {
   const modelName = MODEL_NAME_BY_ANCHOR[creature.primaryAnchor];
-  const modelPath = `/models/${modelName}.glb`;
-  const imagePath = `/models/${modelName}.png`;
+  const assetBase = import.meta.env.BASE_URL || '/';
+  const modelPath = `${assetBase}models/${modelName}.glb`;
+  const imagePath = `${assetBase}models/${modelName}.png`;
 
   const [modelStatus, setModelStatus] = React.useState<LoadStatus>('loading');
   const [imageStatus, setImageStatus] = React.useState<LoadStatus>('loading');

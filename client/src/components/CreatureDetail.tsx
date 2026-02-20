@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Creature } from '@hatchlands/shared';
 import { CreatureViewer } from './CreatureViewer';
 import { CreatureStats } from './CreatureStats';
+import { getAnchorDisplayName } from '../utils/anchors';
 import './styles/CreatureDetail.css';
 
 interface CreatureDetailProps {
@@ -22,7 +23,7 @@ export const CreatureDetail: React.FC<CreatureDetailProps> = ({ creature, onClos
   return (
     <div className="creature-detail">
       <div className="detail-header">
-        <h2>{creature.nickname || creature.primaryAnchor}</h2>
+        <h2>{creature.nickname || getAnchorDisplayName(creature.primaryAnchor)}</h2>
         <button className="btn-close" onClick={onClose}>✕</button>
       </div>
 
@@ -47,7 +48,7 @@ export const CreatureDetail: React.FC<CreatureDetailProps> = ({ creature, onClos
                   type="text"
                   value={nicknameEdit}
                   onChange={(e) => setNicknameEdit(e.target.value)}
-                  placeholder={creature.primaryAnchor}
+                  placeholder={getAnchorDisplayName(creature.primaryAnchor)}
                   maxLength={20}
                 />
                 <button onClick={handleSaveNickname} className="btn-small">Save</button>
@@ -55,7 +56,7 @@ export const CreatureDetail: React.FC<CreatureDetailProps> = ({ creature, onClos
               </div>
             ) : (
               <div className="nickname-display">
-                <p className="current-nickname">{creature.nickname || creature.primaryAnchor}</p>
+                <p className="current-nickname">{creature.nickname || getAnchorDisplayName(creature.primaryAnchor)}</p>
                 <button onClick={() => setIsEditing(true)} className="btn-small">Edit</button>
               </div>
             )}
@@ -91,12 +92,12 @@ export const CreatureDetail: React.FC<CreatureDetailProps> = ({ creature, onClos
             <div className="species-info">
               <div className="species-item">
                 <span className="label">Primary:</span>
-                <span className="value">{creature.primaryAnchor}</span>
+                <span className="value">{getAnchorDisplayName(creature.primaryAnchor)}</span>
               </div>
               {creature.secondaryAnchor && (
                 <div className="species-item">
                   <span className="label">Secondary:</span>
-                  <span className="value">{creature.secondaryAnchor}</span>
+                  <span className="value">{getAnchorDisplayName(creature.secondaryAnchor)}</span>
                 </div>
               )}
               <div className="species-item">
@@ -141,3 +142,4 @@ export const CreatureDetail: React.FC<CreatureDetailProps> = ({ creature, onClos
     </div>
   );
 };
+

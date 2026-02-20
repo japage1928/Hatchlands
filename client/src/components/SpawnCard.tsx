@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Spawn } from '@hatchlands/shared';
 import { CreatureViewer } from './CreatureViewer';
+import { getAnchorDisplayName } from '../utils/anchors';
 import './styles/SpawnCard.css';
 
 interface SpawnCardProps {
@@ -22,9 +23,9 @@ export const SpawnCard: React.FC<SpawnCardProps> = ({ spawn, onSelect, distance 
 
       <div className="spawn-info">
         <div className="spawn-header">
-          <h3>{spawn.creature.primaryAnchor}</h3>
+          <h3>{getAnchorDisplayName(spawn.creature.primaryAnchor)}</h3>
           {spawn.creature.secondaryAnchor && (
-            <span className="hybrid-badge">{spawn.creature.secondaryAnchor}</span>
+            <span className="hybrid-badge">{getAnchorDisplayName(spawn.creature.secondaryAnchor)}</span>
           )}
         </div>
 

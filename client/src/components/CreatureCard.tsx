@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Creature } from '@hatchlands/shared';
 import { CreatureViewer } from './CreatureViewer';
+import { getAnchorDisplayName } from '../utils/anchors';
 import './styles/CreatureCard.css';
 
 interface CreatureCardProps {
@@ -23,19 +24,19 @@ export const CreatureCard: React.FC<CreatureCardProps> = ({ creature, onSelect, 
       
       <div className="creature-info">
         <div className="creature-header">
-          <h3>{creature.nickname || `${creature.primaryAnchor} #${creature.id.slice(0, 8)}`}</h3>
+          <h3>{creature.nickname || `${getAnchorDisplayName(creature.primaryAnchor)} #${creature.id.slice(0, 8)}`}</h3>
           <span className="creature-level">Level {creature.level}</span>
         </div>
 
         <div className="creature-meta">
           <div className="meta-item">
             <span className="label">Species:</span>
-            <span className="value">{creature.primaryAnchor}</span>
+            <span className="value">{getAnchorDisplayName(creature.primaryAnchor)}</span>
           </div>
           {creature.secondaryAnchor && (
             <div className="meta-item">
               <span className="label">Hybrid:</span>
-              <span className="value">{creature.secondaryAnchor}</span>
+              <span className="value">{getAnchorDisplayName(creature.secondaryAnchor)}</span>
             </div>
           )}
           <div className="meta-item">
