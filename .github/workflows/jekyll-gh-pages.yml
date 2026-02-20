@@ -33,6 +33,9 @@ jobs:
       - name: Build shared package
         run: npm run build --workspace=shared
 
+      - name: Rebuild client dependencies  
+        run: npm install
+
       - name: Build client
         run: npm run build --workspace=client
         env:
