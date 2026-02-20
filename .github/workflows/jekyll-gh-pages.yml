@@ -1,4 +1,4 @@
-name: Deploy Hatchlands PWA to GitHub Pages
+name: Deploy Hatchlands PWA to GitHub Pages (v2)
 
 on:
   push:
