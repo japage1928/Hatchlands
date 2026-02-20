@@ -1,0 +1,141 @@
+/* Spawn Card Styles */
+
+.spawn-card {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border: 2px solid #0f3460;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+}
+
+.spawn-card:hover {
+  transform: translateY(-6px);
+  border-color: #7fb069;
+  box-shadow: 0 12px 32px rgba(127, 176, 105, 0.25);
+}
+
+.spawn-viewer-container {
+  width: 100%;
+  height: 280px;
+  background: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+}
+
+.spawn-info {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.spawn-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.spawn-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #7fb069;
+  font-weight: bold;
+}
+
+.hybrid-badge {
+  background: linear-gradient(135deg, #ff006e 0%, #fb5607 100%);
+  color: white;
+  padding: 3px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.spawn-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 11px;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #888;
+}
+
+.meta-item .icon {
+  font-size: 12px;
+}
+
+.meta-item.expiring-soon {
+  color: #ff6b6b;
+  font-weight: bold;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.spawn-status {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.status-locked {
+  background: rgba(255, 0, 110, 0.1);
+  border: 1px solid #ff006e;
+  color: #ff6b9d;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 11px;
+  text-align: center;
+}
+
+.btn-encounter {
+  flex: 1;
+  background: linear-gradient(135deg, #7fb069 0%, #6fa059 100%);
+  border: none;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(127, 176, 105, 0.3);
+}
+
+.btn-encounter:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(127, 176, 105, 0.4);
+}
+
+.btn-encounter:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  .spawn-viewer-container {
+    height: 200px;
+  }
+
+  .spawn-header h3 {
+    font-size: 14px;
+  }
+}

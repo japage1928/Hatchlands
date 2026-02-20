@@ -1,0 +1,318 @@
+/* Creature Detail Styles */
+
+.creature-detail {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border: 2px solid #0f3460;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+}
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid #0f3460;
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, transparent 100%);
+}
+
+.detail-header h2 {
+  margin: 0;
+  color: #00d4ff;
+  font-size: 24px;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 28px;
+  cursor: pointer;
+  padding: 4px 8px;
+  transition: color 0.2s;
+}
+
+.btn-close:hover {
+  color: #00d4ff;
+}
+
+.detail-container {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 16px;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.detail-main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.viewer-section {
+  background: rgba(0, 212, 255, 0.03);
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.detail-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 12px;
+  border-radius: 6px;
+}
+
+/* Nickname Section */
+
+.nickname-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(0, 212, 255, 0.05);
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  border-radius: 6px;
+}
+
+.nickname-section label {
+  color: #888;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.nickname-display {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.current-nickname {
+  margin: 0;
+  color: #00d4ff;
+  font-size: 16px;
+  font-weight: bold;
+  word-break: break-word;
+}
+
+.nickname-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.nickname-edit input {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  color: #00d4ff;
+  padding: 8px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.nickname-edit input::placeholder {
+  color: #666;
+}
+
+.nickname-edit input:focus {
+  outline: none;
+  border-color: #00d4ff;
+  background: rgba(0, 212, 255, 0.1);
+}
+
+.nickname-edit button {
+  padding: 6px 12px;
+  font-size: 12px;
+  border-radius: 4px;
+}
+
+/* Lineage Section */
+
+.lineage-section,
+.species-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(0, 212, 255, 0.05);
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  border-radius: 6px;
+}
+
+.lineage-section h3,
+.species-section h3,
+.actions-section h3 {
+  margin: 0;
+  color: #00d4ff;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.lineage-chain {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 11px;
+}
+
+.lineage-node {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 6px;
+  border-radius: 4px;
+  border-left: 2px solid #ff006e;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lineage-node .generation {
+  color: #ff006e;
+  font-weight: bold;
+}
+
+.lineage-node .parents {
+  color: #888;
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+}
+
+.lineage-node .timestamp {
+  color: #666;
+  font-size: 10px;
+}
+
+/* Species Section */
+
+.species-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.species-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.species-item .label {
+  color: #888;
+  font-weight: 600;
+}
+
+.species-item .value {
+  color: #00d4ff;
+  text-align: right;
+}
+
+.species-item .status-wild {
+  color: #7fb069;
+}
+
+.species-item .status-captured {
+  color: #00d4ff;
+}
+
+.species-item .status-breeding {
+  color: #ff006e;
+}
+
+/* Actions Section */
+
+.actions-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(0, 212, 255, 0.05);
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  border-radius: 6px;
+  margin-top: auto;
+}
+
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.action-btn {
+  padding: 8px 12px;
+  border: 1px solid#0f3460;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.3);
+  color: #00d4ff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid rgba(0, 212, 255, 0.3);
+}
+
+.action-btn:hover {
+  background: rgba(0, 212, 255, 0.1);
+  border-color: #00d4ff;
+}
+
+.action-btn.breed:hover {
+  border-color: #ff006e;
+  color: #ff006e;
+  background: rgba(255, 0, 110, 0.1);
+}
+
+.action-btn.release:hover {
+  border-color: #fb5607;
+  color: #fb5607;
+  background: rgba(251, 86, 7, 0.1);
+}
+
+/* Responsive */
+
+@media (max-width: 1024px) {
+  .detail-container {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-sidebar {
+    grid-row: auto;
+  }
+}
+
+@media (max-width: 600px) {
+  .detail-header {
+    padding: 12px;
+  }
+
+  .detail-header h2 {
+    font-size: 18px;
+  }
+
+  .detail-container {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .detail-sidebar {
+    padding: 8px;
+    gap: 12px;
+  }
+
+  .lineage-section,
+  .species-section,
+  .actions-section,
+  .nickname-section {
+    padding: 8px;
+  }
+}

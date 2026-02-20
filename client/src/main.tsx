@@ -2,8 +2,14 @@ import * as React from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
 import { registerServiceWorker, setupInstallPrompt, isInstalledPWA } from './pwa';
+import { api } from './api/client';
+import { CreatureList } from './components/CreatureList';
+import { BreedingUI } from './components/BreedingUI';
+import { SpawnList } from './components/SpawnList';
+import { EncounterView } from './components/EncounterView';
+import { Creature, Spawn, Encounter } from '@hatchlands/shared';
 
-type Page = 'home' | 'creatures' | 'explore' | 'marketplace';
+type Page = 'home' | 'creatures' | 'explore' | 'marketplace' | 'breeding' | 'encounter';
 
 function App() {
   const [isOnline, setIsOnline] = React.useState(navigator.onLine);
@@ -11,6 +17,14 @@ function App() {
   const [installPrompt, setInstallPrompt] = React.useState<(() => Promise<void>) | null>(null);
   const [showUpdateBanner, setShowUpdateBanner] = React.useState(false);
   const [currentPage, setCurrentPage] = React.useState<Page>('home');
+  
+  // World state
+  const [creatures, setCreatures] = React.useState<Creature[]>([]);
+  const [spawns, setSpawns] = React.useState<Spawn[]>([]);
+  const [currentEncounter, setCurrentEncounter] = React.useState<Encounter | null>(null);
+  const [selectedSpawn, setSelectedSpawn] = React.useState<Spawn | null>(null);
+  const [loadingWorld, setLoadingWorld] = React.useState(false);
+  const [worldError, setWorldError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     // Register service worker
@@ -34,6 +48,60 @@ function App() {
       setCanInstall(true);
       setInstallPrompt(() => promptFn);
     });
+  }, []);
+
+  // Fetch world data when online
+  const fetchWorldData = React.useCallback(async () => {
+    if (!isOnline) return;
+    
+    setLoadingWorld(true);
+    setWorldError(null);
+    try {
+      const data = await api.getWorld();
+      if (data) {
+        setCreatures((data as any).creatures || []);
+        setSpawns((data as any).spawns || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch world data:', err);
+      setWorldError(err instanceof Error ? err.message : 'Failed to load world data');
+    } finally {
+      setLoadingWorld(false);
+    }
+  }, [isOnline]);
+
+  // Fetch world data on page visits or online status change
+  React.useEffect(() => {
+    if (isOnline) {
+      fetchWorldData();
+    }
+  }, [isOnline, fetchWorldData]);
+
+  // Start an encounter with a spawn
+  const handleStartEncounter = React.useCallback(async (spawn: Spawn) => {
+    try {
+      setSelectedSpawn(spawn);
+      const response = await api.startEncounter(spawn.id);
+      setCurrentEncounter(response);
+      setCurrentPage('encounter');
+    } catch (err) {
+      setWorldError(err instanceof Error ? err.message : 'Failed to start encounter');
+    }
+  }, []);
+
+  // Handle creature captured
+  const handleCaptured = React.useCallback(() => {
+    fetchWorldData();
+    setCurrentPage('creatures');
+    setSelectedSpawn(null);
+    setCurrentEncounter(null);
+  }, [fetchWorldData]);
+
+  // Handle fled encounter
+  const handleFled = React.useCallback(() => {
+    setCurrentPage('explore');
+    setSelectedSpawn(null);
+    setCurrentEncounter(null);
   }, []);
 
   const handleInstall = async () => {
@@ -106,19 +174,28 @@ function App() {
             <section className="actions">
               <button 
                 className="btn-primary touch-target"
-                onClick={() => setCurrentPage('explore')}
+                onClick={() => {
+                  fetchWorldData();
+                  setCurrentPage('explore');
+                }}
               >
                 🗺️ Explore World
               </button>
               <button 
                 className="btn-primary touch-target"
-                onClick={() => setCurrentPage('creatures')}
+                onClick={() => {
+                  fetchWorldData();
+                  setCurrentPage('creatures');
+                }}
               >
                 🎒 My Creatures
               </button>
               <button 
                 className="btn-primary touch-target"
-                onClick={() => setCurrentPage('marketplace')}
+                onClick={() => {
+                  fetchWorldData();
+                  setCurrentPage('marketplace');
+                }}
               >
                 🏪 Marketplace
               </button>
@@ -129,31 +206,110 @@ function App() {
         {/* My Creatures Page */}
         {currentPage === 'creatures' && (
           <section className="creatures-page">
-            <h2>🎒 My Creatures</h2>
-            <p>Your creature collection will appear here.</p>
-            <p className="coming-soon">Coming soon...</p>
+            <div className="page-header">
+              <h2>🎒 My Creatures</h2>
+              <button 
+                className="btn-secondary"
+                onClick={() => setCurrentPage('breeding')}
+              >
+                🥚 Breed
+              </button>
+            </div>
+
+            {worldError && (
+              <div className="error-message">
+                ⚠️ {worldError}
+                <button onClick={fetchWorldData} className="btn-small">Retry</button>
+              </div>
+            )}
+            
+            <CreatureList 
+              creatures={creatures}
+              loading={loadingWorld}
+              emptyMessage="You haven't captured any creatures yet. Visit the Explore page to find some!"
+            />
+
             <button 
-              className="btn-primary"
+              className="btn-secondary"
               onClick={() => setCurrentPage('home')}
             >
-              ← Back
+              ← Back Home
             </button>
           </section>
         )}
 
+        {/* Breeding Page */}
+        {currentPage === 'breeding' && creatures.length > 0 && (
+          <section className="breeding-page">
+            <BreedingUI 
+              creatures={creatures}
+              onBreedingStarted={fetchWorldData}
+              onClose={() => setCurrentPage('creatures')}
+            />
+          </section>
+        )}
+
+        {currentPage === 'breeding' && creatures.length === 0 && (
+          <section className="breeding-page">
+            <div className="empty-breeding">
+              <h2>🥚 Breeding</h2>
+              <p>You need at least 2 creatures to breed.</p>
+              <button 
+                className="btn-primary"
+                onClick={() => setCurrentPage('creatures')}
+              >
+                ← Back to Creatures
+              </button>
+            </div>
+          </section>
+        )}
+
         {/* Explore World Page */}
-        {currentPage === 'explore' && (
+        {currentPage === 'explore' && !currentEncounter && (
           <section className="explore-page">
-            <h2>🗺️ Explore World</h2>
-            <p>Discover creatures in the world around you.</p>
-            <p className="coming-soon">Map and creature discovery coming soon...</p>
+            <div className="page-header">
+              <h2>🗺️ Explore World</h2>
+              <button 
+                className="btn-secondary"
+                onClick={fetchWorldData}
+              >
+                🔄 Refresh
+              </button>
+            </div>
+
+            {worldError && (
+              <div className="error-message">
+                ⚠️ {worldError}
+                <button onClick={fetchWorldData} className="btn-small">Retry</button>
+              </div>
+            )}
+
+            <SpawnList 
+              spawns={spawns}
+              loading={loadingWorld}
+              onSelectSpawn={handleStartEncounter}
+            />
+
             <button 
-              className="btn-primary"
+              className="btn-secondary"
               onClick={() => setCurrentPage('home')}
             >
-              ← Back
+              ← Back Home
             </button>
           </section>
+        )}
+
+        {/* Encounter Modal */}
+        {currentPage === 'encounter' && selectedSpawn && currentEncounter && (
+          <div className="modal-overlay">
+            <EncounterView
+              spawn={selectedSpawn}
+              encounter={currentEncounter}
+              onCaptured={handleCaptured}
+              onFled={handleFled}
+              onClose={handleFled}
+            />
+          </div>
         )}
 
         {/* Marketplace Page */}

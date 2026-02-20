@@ -1,0 +1,75 @@
+/* Creature List Styles */
+
+.creature-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.creature-list.loading {
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+}
+
+.creature-list.empty {
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  color: #888;
+  font-size: 16px;
+}
+
+.creature-list .spinner {
+  font-size: 14px;
+  color: #00d4ff;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.library-stats {
+  display: flex;
+  gap: 24px;
+  padding: 12px;
+  background: rgba(0, 212, 255, 0.05);
+  border-radius: 4px;
+  border-left: 3px solid #00d4ff;
+  font-size: 12px;
+  color: #888;
+}
+
+.library-stats span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.creatures-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .creatures-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+  }
+
+  .library-stats {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .creatures-grid {
+    grid-template-columns: 1fr;
+  }
+}

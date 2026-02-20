@@ -1,0 +1,223 @@
+/* Creature Stats Styles */
+
+.creature-stats {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border: 2px solid #0f3460;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.stats-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+}
+
+.stats-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.stats-title h3 {
+  margin: 0;
+  color: #00d4ff;
+  font-size: 18px;
+}
+
+.rarity-badge {
+  background: linear-gradient(135deg, #ff006e 0%, #fb5607 100%);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.level-badge {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.level-number {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.level-up-indicator {
+  animation: levelUpPulse 0.6s ease-out;
+  font-size: 20px;
+  color: #ffeb3b;
+  font-weight: bold;
+}
+
+@keyframes levelUpPulse {
+  0% {
+    transform: scale(1.5);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+/* XP Section */
+
+.xp-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.xp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+
+.xp-label {
+  color: #888;
+  font-weight: 600;
+}
+
+.xp-numbers {
+  color: #00d4ff;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+}
+
+.xp-bar-container {
+  position: relative;
+}
+
+.xp-bar {
+  width: 100%;
+  height: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 212, 255, 0.2);
+}
+
+.xp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00d4ff 0%, #667eea 100%);
+  transition: width 0.3s ease;
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.3);
+}
+
+.max-level-badge {
+  position: absolute;
+  top: -18px;
+  right: 0;
+  font-size: 10px;
+  color: #ffeb3b;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Stats Grid */
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 10px;
+}
+
+.stat-item {
+  background: rgba(0, 212, 255, 0.05);
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  border-radius: 6px;
+  padding: 10px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s;
+}
+
+.stat-item:hover {
+  background: rgba(0, 212, 255, 0.1);
+  border-color: #00d4ff;
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.2);
+}
+
+.stat-icon {
+  font-size: 16px;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: #888;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.stat-value {
+  font-size: 14px;
+  color: #00d4ff;
+  font-weight: bold;
+  font-family: 'Courier New', monospace;
+}
+
+/* Genetics Info */
+
+.genetics-info {
+  background: rgba(0, 212, 255, 0.03);
+  border-left: 3px solid rgba(0, 212, 255, 0.3);
+  padding: 12px;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.genetics-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.genetics-item .label {
+  color: #888;
+  font-weight: 600;
+}
+
+.genetics-item .value {
+  color: #00d4ff;
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+}
+
+/* Responsive */
+
+@media (max-width: 600px) {
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .stats-title {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .stats-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

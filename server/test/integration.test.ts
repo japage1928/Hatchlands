@@ -71,7 +71,7 @@ let allAnchorsWork = true;
 for (const anchorId of anchorIds) {
   try {
     const config = {
-      seed: `test-${anchorId}`,
+      seed: hashString(`test-${anchorId}`),
       primaryAnchorId: anchorId as any,
       generation: 0,
     };
@@ -329,10 +329,10 @@ const generations = [];
 let currentSeed = hashString('gen-0-seed');
 
 for (let i = 0; i < 5; i++) {
-  const creature = generateWildCreature(currentSeed, 'unicorn');
-  generations.push(creature);
+  const result = generateWildCreature(currentSeed, 'unicorn');
+  generations.push(result.creature);
   currentSeed = hashString(`gen-${i + 1}-seed`);
-  console.log(`  ✓ Generation ${i}: ${creature.primaryAnchor} (level ${creature.level})`);
+  console.log(`  ✓ Generation ${i}: ${result.creature.primaryAnchor} (level ${result.creature.level})`);
 }
 
 if (generations.length === 5) {
