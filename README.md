@@ -1,104 +1,54 @@
 # Hatchlands
 
-**A location-based multiplayer creature ecosystem**
+A creature-collecting and breeding game built with React, Vite and TypeScript.
 
-Hatchlands is a persistent creature population simulator where players discover, capture, breed, and trade individual organisms in a shared world. Every creature is unique, deterministically generated, and permanently recorded.
+**Status: early development / prototype.** It is not production-ready and not a finished game.
+Live static client: https://japage1928.github.io/Hatchlands/
 
-## Core Principles
+## What works today
 
-- **Persistent World Simulation**: Server-authoritative shared world
-- **Individual Organisms**: Each creature is unique with lineage and identity
-- **Deterministic Reconstruction**: Creatures rebuild identically from seed data
-- **Anchor Biology**: 15 anchor species define biological constraints
-- **True Ownership**: Creatures are transferable records, not duplicates
+- Deterministic, seed-based creature generation (15 "anchor" species with biology rules) in `shared/` and `server/src/engines/`.
+- A React client with demo data: browse creatures, explore spawns, encounter/capture flow, and breeding UI. Creatures are shown as 2D PNG sprites (14 of 15 species have one; a placeholder is shown for the rest).
+- Installable PWA shell (service worker, manifest, placeholder icons).
+- Unit tests for the deterministic generator (`npm test`).
 
-## Project Structure
+## What does not work / is not done
 
-```
-hatchlands/
-├── server/          # Server-side Node.js application
-├── client/          # Client-side React + Three.js application
-├── shared/          # Shared types and constants
-└── database/        # Database schema and migrations
-```
+- The hosted site has **no backend**. API-dependent screens fall back to demo data or show an error.
+- The Express/PostgreSQL server in `server/` exists but is not deployed and is not exercised by CI.
+- Marketplace/trading is a stub. There is no tutorial, save system, or final art. Sprites and icons are placeholders.
+- The game is moving toward **offline single-player first**; multiplayer is deferred. See [docs/ROADMAP.md](docs/ROADMAP.md).
 
-## Engines
+## Run it
 
-1. **Biological Engine** - Anchor species constraint system
-2. **Deterministic Engine** - Seed-based reconstruction
-3. **Persistence Engine** - Permanent records and auditability
-4. **Rendering Engine** - Parameter-driven 3D reconstruction
-5. **Economy Engine** - Ownership transfer via trade
-6. **World Simulation Engine** - Region-based population generation
+Requires Node.js 20+ and npm 9+.
 
-## Setup
-
-See individual README files in `server/` and `client/` directories.
-
-## Architecture
-
-- **Server**: Authoritative world state, generates spawns, validates actions
-- **Client**: Displays world data, renders creatures, sends player actions
-- **Database**: PostgreSQL for persistent storage
-
-## Key Concepts
-
-### Creature Identity
-Every creature contains:
-- `id` - Unique identifier
-- `seed` - Generation seed
-- `primaryAnchor` - Base species
-- `secondaryAnchor` - Hybrid species (optional)
-- `genomeSignature` - Genetic data
-- `appearanceParams` - Visual parameters
-- `lineageHistory` - Ancestry chain
-- `status` - Current state
-
-### World Contract
-Primary endpoint: `GET /world`
-
-Returns unified state:
-- Player data
-- Nearby creatures
-- Market listings  
-- Encounters
-- Breeding status
-
-### Spawn Rules
-Spawns depend only on: `seed + region + time window`
-
-Independent of player activity for fairness and reproducibility.
-
-## 📱 Progressive Web App
-
-Hatchlands is now **PWA-ready** with mobile-first design:
-
-### Features
-- ✅ Install to home screen (mobile & desktop)
-- ✅ Offline support with service worker caching
-- ✅ Touch-optimized UI (swipe, tap, haptic feedback)
-- ✅ Responsive design (mobile, tablet, desktop)
-- ✅ GitHub Pages deployment (auto-deploy on push)
-
-### Quick Deploy
 ```bash
-git push origin main  # Automatically deploys to GitHub Pages
+npm ci
+npm run dev:client      # client dev server at http://localhost:5173/Hatchlands/
+npm run build           # builds shared + client into client/dist
+npm test                # runs the generator tests (vitest)
 ```
 
-**📱 Full PWA Guide:** [PWA_README.md](PWA_README.md)  
-**🚀 Deployment Options:** [DEPLOYMENT.md](DEPLOYMENT.md)  
-**🎨 Mobile Components:** [client/MOBILE_COMPONENTS.md](client/MOBILE_COMPONENTS.md)
+The server (optional, needs PostgreSQL) is described in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
----
+## Project layout
 
-## Documentation
+```
+client/    React + Vite PWA (2D sprites in client/public/sprites)
+shared/    Shared types, anchor species, seeded RNG / genetics
+server/    Express + PostgreSQL API and the deterministic generator (tests live here)
+database/  SQL schema and seed data
+docs/      Development, deployment, roadmap
+```
 
-- **[BUILD_SUMMARY.md](BUILD_SUMMARY.md)** - Complete build documentation
-- **[DEVELOPMENT.md](DEVELOPMENT.md)** - Development workflow
-- **[PWA_README.md](PWA_README.md)** - ⭐ PWA & mobile features
-- **[DEPLOYMENT.md](DEPLOYMENT.md)** - ⭐ Production deployment
-- **[server/README.md](server/README.md)** - Server API
-- **[client/README.md](client/README.md)** - Client architecture
-- **[client/MOBILE_COMPONENTS.md](client/MOBILE_COMPONENTS.md)** - ⭐ Touch UI
-- **[shared/README.md](shared/README.md)** - Type system
-- **[database/README.md](database/README.md)** - Database schema
+## Docs
+
+- [docs/ROADMAP.md](docs/ROADMAP.md) – planned phases
+- [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) – dev setup (includes the legacy server/DB path)
+- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) – GitHub Pages deployment
+- [CHANGELOG.md](CHANGELOG.md)
+
+## License
+
+All rights reserved (placeholder, see [LICENSE](LICENSE)).

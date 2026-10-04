@@ -11,20 +11,27 @@ export default defineConfig({
       manifest: {
         name: 'Hatchlands',
         short_name: 'Hatchlands',
-        description: 'Location-based multiplayer creature ecosystem',
+        description: 'Creature collecting and breeding game',
         theme_color: '#667eea',
         background_color: '#667eea',
         display: 'standalone',
+        // Paths are relative to the manifest so they resolve under the /Hatchlands/ base.
         icons: [
           {
-            src: '/icons/icon-192x192.png',
+            src: 'icons/icon-192x192.png',
             sizes: '192x192',
             type: 'image/png',
           },
           {
-            src: '/icons/icon-512x512.png',
+            src: 'icons/icon-512x512.png',
             sizes: '512x512',
             type: 'image/png',
+          },
+          {
+            src: 'icons/icon-512x512-maskable.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
           },
         ],
       },
@@ -62,5 +69,6 @@ export default defineConfig({
     minify: 'terser',
     sourcemap: false,
   },
-  base: '/Hatchlands/', // GitHub Pages path: https://username.github.io/Hatchlands/
+  // GitHub Pages project site path: https://japage1928.github.io/Hatchlands/
+  base: '/Hatchlands/',
 });
