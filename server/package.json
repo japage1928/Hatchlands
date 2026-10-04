@@ -8,7 +8,7 @@
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/index.js",
     "migrate": "node dist/db/migrate.js",
-    "test": "jest",
+    "test": "vitest run",
     "test:integration": "ts-node test/integration.test.ts"
   },
   "dependencies": {
@@ -32,7 +32,6 @@
     "typescript": "^5.3.3",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
-    "jest": "^29.7.0",
-    "@types/jest": "^29.5.11"
+    "vitest": "^1.6.0"
   }
 }

@@ -18,13 +18,13 @@
     "build": "npm run build:shared && npm run build:client",
     "start": "npm run start --workspace=server",
     "db:migrate": "npm run migrate --workspace=server",
-    "test": "npm test --workspaces"
+    "test": "npm test --workspace=server"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
   },
   "engines": {
-    "node": ">=18.0.0",
+    "node": ">=20.0.0",
     "npm": ">=9.0.0"
   }
 }

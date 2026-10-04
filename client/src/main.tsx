@@ -455,7 +455,7 @@ function App() {
 
       <footer>
         <p>Hatchlands v1.0.0 | PWA Ready</p>
-        <p className="small">Built with TypeScript, React, Three.js, PostgreSQL</p>
+        <p className="small">Built with TypeScript, React, Vite</p>
       </footer>
     </div>
   );
