@@ -1,261 +1,147 @@
 import * as React from 'react';
 import { createRoot } from 'react-dom/client';
-import { isAxiosError } from 'axios';
 import './index.css';
 import { registerServiceWorker, setupInstallPrompt, isInstalledPWA } from './pwa';
-import { api } from './api/client';
 import { CreatureList } from './components/CreatureList';
+import { CreatureDetail } from './components/CreatureDetail';
 import { BreedingUI } from './components/BreedingUI';
 import { SpawnList } from './components/SpawnList';
 import { EncounterView } from './components/EncounterView';
-import { Creature, Spawn, Encounter, AnchorId, ANCHOR_SPECIES, deriveOffspringSeed, predictOffspringBlueprint } from '@hatchlands/shared';
+import { Creature, Spawn, Encounter } from '@hatchlands/shared';
+import { game } from './local/game';
+import { OFFLINE_RULES, WorldState, getReleaseReward } from './local/LocalGame';
 import { getAnchorDisplayName } from './utils/anchors';
 
-type Page = 'home' | 'creatures' | 'explore' | 'marketplace' | 'breeding' | 'encounter';
+type Page = 'home' | 'creatures' | 'explore' | 'breeding' | 'encounter';
 
-const getRequestErrorMessage = (err: unknown, fallback: string) => {
-  if (!isAxiosError(err)) {
-    return err instanceof Error ? err.message : fallback;
-  }
+const errorMessage = (err: unknown, fallback: string) => (err instanceof Error ? err.message : fallback);
 
-  if (err.code === 'ERR_NETWORK') {
-    return 'Cannot reach server. Start the backend on port 3000 or set VITE_API_URL.';
-  }
-
-  const apiError = (err.response?.data as any)?.error;
-  if (typeof apiError === 'string' && apiError.trim()) {
-    return apiError;
-  }
-
-  return err.message || fallback;
-};
-
-const createDemoCreature = (
-  id: string,
-  anchor: AnchorId,
-  status: Creature['status'],
-  level: number,
-  seed: number,
-): Creature => {
-  const species = ANCHOR_SPECIES[anchor];
-
-  return {
-    id,
-    seed,
-    primaryAnchor: anchor,
-    genomeSignature: {
-      primaryGenes: [seed % 97, (seed * 3) % 89, (seed * 7) % 83],
-      mutations: [],
-      generation: 0,
-    },
-    appearanceParams: {
-      parts: {
-        body: species.anatomy.bodyParts[0] || 'scaled_body',
-        head: species.anatomy.headTypes[0] || 'horned_head',
-        limbs: species.anatomy.limbTypes.length > 0 ? species.anatomy.limbTypes.slice(0, 2) : ['clawed_legs', 'clawed_legs'],
-        tail: species.anatomy.tailTypes[0],
-        wings: species.anatomy.wingTypes?.slice(0, 2),
-      },
-      colorIndices: [0, 1, 2],
-      materials: species.materials.slice(0, 2),
-      scale: 1,
-      procedural: {
-        roughness: 0.5,
-        metalness: 0.1,
-      },
-    },
-    ownerId: status === 'captured' ? 'demo-player' : undefined,
-    status,
-    lineageHistory: [],
-    capturedAt: status === 'captured' ? Date.now() - 3600_000 : undefined,
-    birthTimestamp: Date.now() - 86_400_000,
-    xp: level * 120,
-    level,
-    nickname: status === 'captured' ? `${getAnchorDisplayName(anchor)} #${id.slice(-2)}` : undefined,
-  };
-};
-
-const buildDemoWorld = () => {
-  const now = Date.now();
-  const creatureA = createDemoCreature('demo-c-001', 'dragon', 'captured', 12, 1001);
-  const creatureB = createDemoCreature('demo-c-002', 'griffin', 'captured', 8, 1002);
-  const spawnA = createDemoCreature('demo-s-001', 'serpent', 'wild', 5, 2001);
-  const spawnB = createDemoCreature('demo-s-002', 'phoenix', 'wild', 9, 2002);
-  const spawnC = createDemoCreature('demo-s-003', 'unicorn', 'wild', 4, 2003);
-
-  const spawns: Spawn[] = [spawnA, spawnB, spawnC].map((creature, index) => ({
-    id: `demo-spawn-${index + 1}`,
-    seed: creature.seed + 500,
-    regionId: 'demo-region',
-    timeWindow: {
-      start: now - 15 * 60_000,
-      end: now + 45 * 60_000,
-    },
-    creature,
-    spawnedAt: now - (index + 1) * 120_000,
-    expiresAt: now + (index + 1) * 900_000,
-    locked: false,
-  }));
-
-  return {
-    creatures: [creatureA, creatureB],
-    spawns,
-  };
-};
-
-const createDemoOffspring = (parentA: Creature, parentB: Creature): Creature => {
-  const now = Date.now();
-  const seed = deriveOffspringSeed(parentA, parentB, now);
-  const blueprint = predictOffspringBlueprint(parentA, parentB, seed);
-
-  return {
-    id: `demo-offspring-${now}`,
-    seed: blueprint.seed,
-    primaryAnchor: blueprint.primaryAnchor,
-    secondaryAnchor: blueprint.secondaryAnchor,
-    genomeSignature: blueprint.genomeSignature,
-    appearanceParams: blueprint.appearanceParams,
-    ownerId: 'demo-player',
-    status: 'captured',
-    lineageHistory: [
-      {
-        creatureId: `demo-offspring-${now}`,
-        generation: blueprint.genomeSignature.generation,
-        timestamp: now,
-        parentA: parentA.id,
-        parentB: parentB.id,
-      },
-    ],
-    capturedAt: now,
-    birthTimestamp: now,
-    xp: 0,
-    level: 1,
-    nickname: `${getAnchorDisplayName(blueprint.primaryAnchor)} Cub`,
-  };
+const formatCountdown = (ms: number) => {
+  const total = Math.max(0, Math.ceil(ms / 1000));
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
 };
 
 function App() {
-  const [isOnline, setIsOnline] = React.useState(navigator.onLine);
   const [canInstall, setCanInstall] = React.useState(false);
   const [installPrompt, setInstallPrompt] = React.useState<(() => Promise<void>) | null>(null);
   const [showUpdateBanner, setShowUpdateBanner] = React.useState(false);
   const [currentPage, setCurrentPage] = React.useState<Page>('home');
 
-  // World state
-  const [creatures, setCreatures] = React.useState<Creature[]>([]);
-  const [spawns, setSpawns] = React.useState<Spawn[]>([]);
-  const [currentEncounter, setCurrentEncounter] = React.useState<Encounter | null>(null);
+  const [world, setWorld] = React.useState<WorldState>(() => game.getWorld());
+  const [now, setNow] = React.useState(Date.now());
+  const [currentEncounter, setCurrentEncounter] = React.useState<(Encounter & { captureChance: number }) | null>(null);
   const [selectedSpawn, setSelectedSpawn] = React.useState<Spawn | null>(null);
-  const [loadingWorld, setLoadingWorld] = React.useState(false);
-  const [worldError, setWorldError] = React.useState<string | null>(null);
-  const [isDemoMode, setIsDemoMode] = React.useState(false);
+  const [selectedCreature, setSelectedCreature] = React.useState<Creature | null>(null);
+  const [notice, setNotice] = React.useState<string | null>(null);
+
+  const refreshWorld = React.useCallback(() => setWorld(game.getWorld()), []);
 
   React.useEffect(() => {
     registerServiceWorker({
-      onSuccess: () => {
-        console.log('PWA ready for offline use');
-      },
-      onUpdate: () => {
-        setShowUpdateBanner(true);
-      },
-      onOffline: () => {
-        setIsOnline(false);
-      },
-      onOnline: () => {
-        setIsOnline(true);
-      },
+      onSuccess: () => console.log('PWA ready for offline use'),
+      onUpdate: () => setShowUpdateBanner(true),
     });
-
     setupInstallPrompt((promptFn) => {
       setCanInstall(true);
       setInstallPrompt(() => promptFn);
     });
   }, []);
 
-  const fetchWorldData = React.useCallback(async () => {
-    if (!isOnline) return;
-    if (isDemoMode) return;
-
-    setLoadingWorld(true);
-    setWorldError(null);
-    try {
-      const data = await api.getWorld();
-      if (data) {
-        const ownedCreatures = (data as any).ownedCreatures || (data as any).creatures || [];
-        const nearbyCreatures = (data as any).nearbyCreatures || (data as any).spawns || [];
-        setCreatures(ownedCreatures);
-        setSpawns(nearbyCreatures);
-        setIsDemoMode(false);
-      }
-    } catch (err) {
-      console.error('Failed to fetch world data:', err);
-      const demoWorld = buildDemoWorld();
-      setCreatures(demoWorld.creatures);
-      setSpawns(demoWorld.spawns);
-      setIsDemoMode(true);
-      setWorldError('Demo mode enabled (no backend server).');
-    } finally {
-      setLoadingWorld(false);
-    }
-  }, [isOnline, isDemoMode]);
-
+  // 1s tick: drives breeding countdowns and rolls spawns over on the hour.
   React.useEffect(() => {
-    if (isOnline) {
-      fetchWorldData();
-    }
-  }, [isOnline, fetchWorldData]);
+    const id = window.setInterval(() => {
+      const t = Date.now();
+      setNow(t);
+      setWorld((w) => (t >= w.nextSpawnRefreshAt ? game.getWorld() : w));
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, []);
 
-  const handleStartEncounter = React.useCallback(async (spawn: Spawn) => {
-    if (isDemoMode) {
-      const now = Date.now();
+  const handleStartEncounter = React.useCallback((spawn: Spawn) => {
+    try {
       setSelectedSpawn(spawn);
-      setCurrentEncounter({
-        id: `demo-enc-${spawn.id}`,
-        playerId: 'demo-player',
-        spawnId: spawn.id,
-        creatureId: spawn.creature.id,
-        startedAt: now,
-        expiresAt: now + 5 * 60_000,
-        resolved: false,
-      });
+      setCurrentEncounter(game.startEncounter(spawn.id));
       setCurrentPage('encounter');
+    } catch (err) {
+      setNotice(errorMessage(err, 'Failed to start encounter'));
+      refreshWorld();
+    }
+  }, [refreshWorld]);
+
+  const handleCaptureAttempt = React.useCallback(async () => {
+    if (!currentEncounter || !selectedSpawn) throw new Error('No encounter');
+    const result = game.capture({ encounterId: currentEncounter.id, spawnId: selectedSpawn.id });
+    refreshWorld();
+    return result;
+  }, [currentEncounter, selectedSpawn, refreshWorld]);
+
+  const endEncounter = (page: Page) => {
+    setCurrentPage(page);
+    setSelectedSpawn(null);
+    setCurrentEncounter(null);
+    refreshWorld();
+  };
+
+  const handleFled = () => {
+    if (currentEncounter) game.flee(currentEncounter.id);
+    endEncounter('explore');
+  };
+
+  const handleStartBreeding = React.useCallback(async (a: Creature, b: Creature) => {
+    game.startBreeding({ parentAId: a.id, parentBId: b.id });
+    refreshWorld();
+  }, [refreshWorld]);
+
+  const handleHatch = (breedingId: string) => {
+    try {
+      const baby = game.completeBreeding(breedingId);
+      setNotice(`An egg hatched: a new ${getAnchorDisplayName(baby.primaryAnchor)}!`);
+    } catch (err) {
+      setNotice(errorMessage(err, 'Could not hatch'));
+    }
+    refreshWorld();
+  };
+
+  const handleCreatureAction = (action: 'breed' | 'release' | 'nickname') => {
+    if (!selectedCreature) return;
+    if (action === 'breed') {
+      setSelectedCreature(null);
+      setCurrentPage('breeding');
       return;
     }
+    if (action === 'release') {
+      const reward = getReleaseReward(selectedCreature);
+      if (!window.confirm(`Release this creature for ${reward} coins?`)) return;
+      try {
+        game.releaseCreature(selectedCreature.id);
+        setNotice(`Released. +${reward} coins.`);
+        setSelectedCreature(null);
+      } catch (err) {
+        setNotice(errorMessage(err, 'Could not release'));
+      }
+      refreshWorld();
+    }
+  };
 
+  const handleDailyBonus = () => {
     try {
-      setSelectedSpawn(spawn);
-      const response = await api.startEncounter(spawn.id);
-      setCurrentEncounter(response);
-      setCurrentPage('encounter');
+      const amount = game.claimDailyBonus();
+      setNotice(`Daily bonus: +${amount} coins.`);
     } catch (err) {
-      setWorldError(getRequestErrorMessage(err, 'Failed to start encounter'));
+      setNotice(errorMessage(err, 'Bonus unavailable'));
     }
-  }, [isDemoMode]);
+    refreshWorld();
+  };
 
-  const handleCaptured = React.useCallback(() => {
-    if (isDemoMode && selectedSpawn) {
-      const capturedCreature: Creature = {
-        ...selectedSpawn.creature,
-        status: 'captured',
-        ownerId: 'demo-player',
-        capturedAt: Date.now(),
-      };
-      setCreatures((prev) => prev.some((c) => c.id === capturedCreature.id) ? prev : [capturedCreature, ...prev]);
-      setSpawns((prev) => prev.filter((s) => s.id !== selectedSpawn.id));
-    } else {
-      fetchWorldData();
-    }
-
-    setCurrentPage('creatures');
-    setSelectedSpawn(null);
-    setCurrentEncounter(null);
-  }, [fetchWorldData, isDemoMode, selectedSpawn]);
-
-  const handleFled = React.useCallback(() => {
-    setCurrentPage('explore');
-    setSelectedSpawn(null);
-    setCurrentEncounter(null);
-  }, []);
+  const handleResetSave = () => {
+    if (!window.confirm('Start a new game? This erases your local save.')) return;
+    game.reset();
+    setNotice('New game started.');
+    refreshWorld();
+    setCurrentPage('home');
+  };
 
   const handleInstall = async () => {
     if (installPrompt) {
@@ -264,40 +150,32 @@ function App() {
     }
   };
 
-  const handleRefresh = () => {
-    window.location.reload();
-  };
-
-  const handleDemoBreeding = React.useCallback(async (parentA: Creature, parentB: Creature) => {
-    const offspring = createDemoOffspring(parentA, parentB);
-    setCreatures((prev) => [offspring, ...prev]);
-  }, []);
-
   const navigateTo = (page: Page) => {
-    if (page === 'explore' || page === 'creatures' || page === 'marketplace') {
-      fetchWorldData();
-    }
+    refreshWorld();
+    setNotice(null);
     setCurrentPage(page);
   };
+
+  const owned = world.creatures;
+  const activeBreeding = world.breeding;
 
   return (
     <div className="app">
       {showUpdateBanner && (
         <div className="update-banner">
           <span>New version available!</span>
-          <button onClick={handleRefresh} className="btn-update">Update</button>
-        </div>
-      )}
-
-      {!isOnline && (
-        <div className="offline-banner">
-          You are offline. Some features may be limited.
+          <button onClick={() => window.location.reload()} className="btn-update">Update</button>
         </div>
       )}
 
       <header>
         <h1>Hatchlands</h1>
-        <p>A persistent creature ecosystem</p>
+        <p>Catch, collect and breed creatures. Offline single-player.</p>
+        <div className="hud">
+          <span className="hud-item">🪙 {world.currency} coins</span>
+          <span className="hud-item">📚 {owned.length} creatures</span>
+          <span className="hud-item">🌿 New spawns in {formatCountdown(world.nextSpawnRefreshAt - now)}</span>
+        </div>
         {isInstalledPWA() && <div className="pwa-badge">Installed</div>}
       </header>
 
@@ -306,47 +184,52 @@ function App() {
           <section className="install-prompt">
             <div className="install-content">
               <h3>Install Hatchlands</h3>
-              <p>Install our app for the best mobile experience and offline play.</p>
-              <button onClick={handleInstall} className="btn-install">
-                Add to Home Screen
-              </button>
+              <p>Install the app for the best mobile experience and offline play.</p>
+              <button onClick={handleInstall} className="btn-install">Add to Home Screen</button>
             </div>
           </section>
         )}
 
         <div className="main-layout">
           <aside className="sidebar-nav">
-            <button
-              className={`btn-primary touch-target nav-btn ${currentPage === 'home' ? 'active' : ''}`}
-              onClick={() => navigateTo('home')}
-            >
+            <button className={`btn-primary touch-target nav-btn ${currentPage === 'home' ? 'active' : ''}`} onClick={() => navigateTo('home')}>
               Home
             </button>
-            <button
-              className={`btn-primary touch-target nav-btn ${currentPage === 'explore' ? 'active' : ''}`}
-              onClick={() => navigateTo('explore')}
-            >
-              Explore World
+            <button className={`btn-primary touch-target nav-btn ${currentPage === 'explore' ? 'active' : ''}`} onClick={() => navigateTo('explore')}>
+              Explore ({world.spawns.length})
             </button>
-            <button
-              className={`btn-primary touch-target nav-btn ${currentPage === 'creatures' ? 'active' : ''}`}
-              onClick={() => navigateTo('creatures')}
-            >
+            <button className={`btn-primary touch-target nav-btn ${currentPage === 'creatures' ? 'active' : ''}`} onClick={() => navigateTo('creatures')}>
               My Creatures
             </button>
-            <button
-              className={`btn-primary touch-target nav-btn ${currentPage === 'marketplace' ? 'active' : ''}`}
-              onClick={() => navigateTo('marketplace')}
-            >
-              Marketplace
+            <button className={`btn-primary touch-target nav-btn ${currentPage === 'breeding' ? 'active' : ''}`} onClick={() => navigateTo('breeding')}>
+              Breeding{activeBreeding.length > 0 ? ` (${activeBreeding.length})` : ''}
             </button>
           </aside>
 
           <div className="content-area">
+            {notice && (
+              <div className="error-message notice-message">
+                {notice}
+                <button onClick={() => setNotice(null)} className="btn-small">OK</button>
+              </div>
+            )}
+
             {currentPage === 'home' && (
               <section className="home-panel">
-                <h2>Select a mode</h2>
-                <p>Use the sidebar to explore, manage creatures, or open the marketplace.</p>
+                <h2>How to play</h2>
+                <ol>
+                  <li><strong>Explore</strong>: {OFFLINE_RULES.minSpawns}-{OFFLINE_RULES.maxSpawns} wild creatures appear every hour. Each capture attempt costs {OFFLINE_RULES.captureCost} coins; common, low-level creatures are easier.</li>
+                  <li><strong>My Creatures</strong>: tap a creature for details. Release one for coins ({OFFLINE_RULES.releaseBase} + {OFFLINE_RULES.releasePerLevel} per level).</li>
+                  <li><strong>Breeding</strong>: pair two creatures for {OFFLINE_RULES.breedingCost} coins. The egg hatches in {OFFLINE_RULES.breedingDurationMs / 60000} minutes.</li>
+                </ol>
+                <p>Your progress is saved on this device.</p>
+                <div className="home-actions">
+                  <button className="btn-primary" onClick={handleDailyBonus} disabled={!world.dailyBonusAvailable}>
+                    {world.dailyBonusAvailable ? `Claim daily bonus (+${OFFLINE_RULES.dailyBonus})` : 'Daily bonus claimed'}
+                  </button>
+                  <button className="btn-secondary" onClick={handleResetSave}>New game</button>
+                </div>
+                <p className="small">Caught {world.stats.captured} · Bred {world.stats.bred} · Released {world.stats.released}</p>
               </section>
             )}
 
@@ -354,78 +237,78 @@ function App() {
               <section className="creatures-page">
                 <div className="page-header">
                   <h2>My Creatures</h2>
-                  <button
-                    className="btn-secondary"
-                    onClick={() => setCurrentPage('breeding')}
-                  >
-                    Breed
-                  </button>
+                  <button className="btn-secondary" onClick={() => navigateTo('breeding')}>Breed</button>
                 </div>
+                <CreatureList
+                  creatures={owned}
+                  onSelectCreature={setSelectedCreature}
+                  emptyMessage="You haven't captured any creatures yet. Visit Explore to find some!"
+                />
+              </section>
+            )}
 
-                {worldError && (
-                  <div className="error-message">
-                    {worldError}
-                    <button onClick={fetchWorldData} className="btn-small">Retry</button>
+            {selectedCreature && (
+              <div className="modal-overlay">
+                <CreatureDetail
+                  creature={selectedCreature}
+                  onClose={() => setSelectedCreature(null)}
+                  onSelectAction={handleCreatureAction}
+                />
+              </div>
+            )}
+
+            {currentPage === 'breeding' && (
+              <section className="breeding-page">
+                {activeBreeding.length > 0 && (
+                  <div className="breeding-queue">
+                    <h3>Eggs</h3>
+                    {activeBreeding.map((req) => {
+                      const a = owned.find((c) => c.id === req.parentAId);
+                      const b = owned.find((c) => c.id === req.parentBId);
+                      const remaining = req.completesAt - now;
+                      return (
+                        <div key={req.id} className="breeding-egg">
+                          <span>
+                            🥚 {a ? getAnchorDisplayName(a.primaryAnchor) : '?'} × {b ? getAnchorDisplayName(b.primaryAnchor) : '?'}
+                          </span>
+                          {remaining > 0 ? (
+                            <span>Hatches in {formatCountdown(remaining)}</span>
+                          ) : (
+                            <button className="btn-primary" onClick={() => handleHatch(req.id)}>Hatch!</button>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
-
-                <CreatureList
-                  creatures={creatures}
-                  loading={loadingWorld}
-                  emptyMessage="You haven't captured any creatures yet. Visit the Explore page to find some!"
-                />
-              </section>
-            )}
-
-            {currentPage === 'breeding' && creatures.length > 0 && (
-              <section className="breeding-page">
-                <BreedingUI
-                  creatures={creatures}
-                  onBreedingStarted={fetchWorldData}
-                  onStartBreeding={isDemoMode ? handleDemoBreeding : undefined}
-                  onClose={() => setCurrentPage('creatures')}
-                />
-              </section>
-            )}
-
-            {currentPage === 'breeding' && creatures.length === 0 && (
-              <section className="breeding-page">
-                <div className="empty-breeding">
-                  <h2>Breeding</h2>
-                  <p>You need at least 2 creatures to breed.</p>
-                  <button
-                    className="btn-primary"
-                    onClick={() => setCurrentPage('creatures')}
-                  >
-                    Back to Creatures
-                  </button>
-                </div>
+                {owned.filter((c) => c.status === 'captured').length >= 2 ? (
+                  <BreedingUI
+                    creatures={owned}
+                    cost={OFFLINE_RULES.breedingCost}
+                    durationMinutes={OFFLINE_RULES.breedingDurationMs / 60000}
+                    onStartBreeding={handleStartBreeding}
+                    onClose={() => setCurrentPage('creatures')}
+                  />
+                ) : (
+                  <div className="empty-breeding">
+                    <h2>Breeding</h2>
+                    <p>You need at least 2 free creatures to breed. Catch more in Explore.</p>
+                    <button className="btn-primary" onClick={() => navigateTo('explore')}>Go Explore</button>
+                  </div>
+                )}
               </section>
             )}
 
             {currentPage === 'explore' && !currentEncounter && (
               <section className="explore-page">
                 <div className="page-header">
-                  <h2>Explore World</h2>
-                  <button
-                    className="btn-secondary"
-                    onClick={fetchWorldData}
-                  >
-                    Refresh
-                  </button>
+                  <h2>Explore</h2>
+                  <span className="small">New spawns in {formatCountdown(world.nextSpawnRefreshAt - now)}</span>
                 </div>
-
-                {worldError && (
-                  <div className="error-message">
-                    {worldError}
-                    <button onClick={fetchWorldData} className="btn-small">Retry</button>
-                  </div>
-                )}
-
                 <SpawnList
-                  spawns={spawns}
-                  loading={loadingWorld}
+                  spawns={world.spawns}
                   onSelectSpawn={handleStartEncounter}
+                  emptyMessage="You found everything this hour. New creatures arrive on the hour."
                 />
               </section>
             )}
@@ -434,28 +317,22 @@ function App() {
               <div className="modal-overlay">
                 <EncounterView
                   spawn={selectedSpawn}
-                  encounter={currentEncounter}
-                  onCaptured={handleCaptured}
+                  captureChance={currentEncounter.captureChance}
+                  captureCost={OFFLINE_RULES.captureCost}
+                  currency={world.currency}
+                  onCapture={handleCaptureAttempt}
+                  onCaptured={() => endEncounter('creatures')}
                   onFled={handleFled}
                   onClose={handleFled}
                 />
               </div>
-            )}
-
-            {currentPage === 'marketplace' && (
-              <section className="marketplace-page">
-                <h2>Marketplace</h2>
-                <p>Trade creatures with other players.</p>
-                <p className="coming-soon">Trading and marketplace coming soon...</p>
-              </section>
             )}
           </div>
         </div>
       </main>
 
       <footer>
-        <p>Hatchlands v1.0.0 | PWA Ready</p>
-        <p className="small">Built with TypeScript, React, Vite</p>
+        <p>Hatchlands v1.1.0 · Offline single-player</p>
       </footer>
     </div>
   );

@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { Creature, deriveOffspringSeed, predictOffspringBlueprint } from '@hatchlands/shared';
-import { api } from '../api/client';
 import { getCreatureStats } from '../systems/progression';
 import { getAnchorDisplayName } from '../utils/anchors';
 import './styles/BreedingUI.css';
@@ -9,7 +8,9 @@ interface BreedingUIProps {
   creatures: Creature[];
   onBreedingStarted?: () => void;
   onClose?: () => void;
-  onStartBreeding?: (parentA: Creature, parentB: Creature) => Promise<void> | void;
+  onStartBreeding: (parentA: Creature, parentB: Creature) => Promise<void> | void;
+  cost: number;
+  durationMinutes: number;
 }
 
 type StatBlock = ReturnType<typeof getCreatureStats>;
@@ -19,6 +20,8 @@ export const BreedingUI: React.FC<BreedingUIProps> = ({
   onBreedingStarted,
   onClose,
   onStartBreeding,
+  cost,
+  durationMinutes,
 }) => {
   const [selectedA, setSelectedA] = React.useState<Creature | null>(null);
   const [selectedB, setSelectedB] = React.useState<Creature | null>(null);
@@ -123,20 +126,11 @@ export const BreedingUI: React.FC<BreedingUIProps> = ({
     setSuccess(null);
 
     try {
-      if (onStartBreeding) {
-        await onStartBreeding(selectedA, selectedB);
-      } else {
-        await api.startBreeding({
-          parentAId: selectedA.id,
-          parentBId: selectedB.id,
-        });
-      }
-
-      setSuccess('Breeding started. Come back soon to collect the offspring.');
+      await onStartBreeding(selectedA, selectedB);
+      setSuccess(`Breeding started. The egg hatches in ${durationMinutes} minutes.`);
       setSelectedA(null);
       setSelectedB(null);
       onBreedingStarted?.();
-      setTimeout(() => onClose?.(), 2000);
     } catch (err) {
       setError(`Failed to start breeding: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
@@ -220,8 +214,8 @@ export const BreedingUI: React.FC<BreedingUIProps> = ({
               </div>
             </div>
             <div className="preview-info">
-              <p>Breeding cost: <strong>200 coins</strong></p>
-              <p>Approximate completion: <strong>5 minutes</strong></p>
+              <p>Breeding cost: <strong>{cost} coins</strong></p>
+              <p>Hatches in: <strong>{durationMinutes} minutes</strong></p>
               <p>
                 Offspring generation:
                 <strong> {Math.max(selectedA.genomeSignature.generation, selectedB.genomeSignature.generation) + 1}</strong>

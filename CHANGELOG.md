@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased – Milestone 1: offline single-player loop
+
+- Moved the deterministic creature generator from `server/src/engines/` into `shared/` (server re-exports it).
+- New `client/src/local/LocalGame.ts`: offline game service (world, encounters, capture, flee, breeding, release, daily bonus) with a versioned localStorage save.
+- Local hourly spawns (3-5 per hour, seeded per save), starter creature, rarity/level-based capture chance (50 coins/try), 3-minute breeding (200 coins), 1000 starting coins.
+- Removed the old demo-mode code from `main.tsx`; the app is offline-only for now. Marketplace hidden.
+- Added client vitest suite (`client/test/localGame.spec.ts`); `npm test` runs server + client tests.
+
 ## Unreleased – Phase 0 cleanup
 
 - Removed ~50 zero-byte junk files from the repo root.

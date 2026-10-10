@@ -18,7 +18,7 @@
     "build": "npm run build:shared && npm run build:client",
     "start": "npm run start --workspace=server",
     "db:migrate": "npm run migrate --workspace=server",
-    "test": "npm test --workspace=server"
+    "test": "npm test --workspace=server && npm test --workspace=client"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

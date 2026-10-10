@@ -3,3 +3,4 @@ export * from './constants';
 export * from './utils';
 export * from './anchors';
 export * from './genetics';
+export * from './generator';

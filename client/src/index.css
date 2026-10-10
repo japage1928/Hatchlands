@@ -493,3 +493,32 @@ a:focus-visible {
     border-radius: 0;
   }
 }
+
+/* Offline loop HUD + breeding queue */
+.hud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-top: 0.5rem;
+}
+.hud-item {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.9rem;
+}
+.home-panel ol { text-align: left; line-height: 1.6; padding-left: 1.25rem; }
+.home-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 1rem 0; }
+.breeding-queue { margin-bottom: 1rem; }
+.breeding-egg {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.8rem;
+  margin: 0.4rem 0;
+  border-radius: 8px;
+  background: rgba(102, 126, 234, 0.12);
+}
+.notice-message { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }

@@ -1,102 +1,62 @@
 import * as React from 'react';
-import { Spawn, Encounter } from '@hatchlands/shared';
-import { api } from '../api/client';
+import { Spawn } from '@hatchlands/shared';
 import { CreatureViewer } from './CreatureViewer';
 import { getAnchorDisplayName } from '../utils/anchors';
 import './styles/EncounterView.css';
 
+export interface CaptureOutcome {
+  success: boolean;
+  message: string;
+}
+
 interface EncounterViewProps {
   spawn: Spawn;
-  encounter?: Encounter;
-  onCaptured?: (creatureId: string) => void;
+  /** Capture chance 0-1 from the game rules. */
+  captureChance: number;
+  captureCost: number;
+  currency: number;
+  onCapture: () => Promise<CaptureOutcome>;
+  onCaptured?: () => void;
   onFled?: () => void;
   onClose?: () => void;
 }
 
-type EncounterPhase = 'start' | 'action' | 'result' | 'captured';
+type EncounterPhase = 'action' | 'result' | 'captured';
 
 export const EncounterView: React.FC<EncounterViewProps> = ({
   spawn,
-  encounter,
+  captureChance,
+  captureCost,
+  currency,
+  onCapture,
   onCaptured,
   onFled,
   onClose,
 }) => {
   const [phase, setPhase] = React.useState<EncounterPhase>('action');
   const [loading, setLoading] = React.useState(false);
-  const [result, setResult] = React.useState<{ success: boolean; message: string } | null>(null);
-  const [captureChance] = React.useState(Math.random() * 100); // Random 0-100% base chance
-  const isDemoEncounter = Boolean(encounter?.id?.startsWith('demo-enc-'));
+  const [result, setResult] = React.useState<CaptureOutcome | null>(null);
+  const pct = Math.round(captureChance * 100);
+  const canAfford = currency >= captureCost;
 
   const handleCapture = async () => {
-    if (!encounter) return;
-
     setLoading(true);
     setPhase('result');
-
     try {
-      if (isDemoEncounter) {
-        const success = Math.random() * 100 < captureChance;
-        if (success) {
-          setResult({ success: true, message: 'You caught the creature!' });
-          setPhase('captured');
-          setTimeout(() => {
-            onCaptured?.(spawn.creature.id);
-          }, 1200);
-        } else {
-          setResult({
-            success: false,
-            message: 'The creature escaped! Try again or flee.',
-          });
-        }
-        return;
-      }
-
-      const response = await api.captureCreature({
-        encounterId: encounter.id,
-        spawnId: spawn.id,
-      });
-
+      const response = await onCapture();
+      setResult(response);
       if (response.success) {
-        setResult({ success: true, message: '🎉 You caught the creature!' });
         setPhase('captured');
-        setTimeout(() => {
-          onCaptured?.(response.creatureId);
-        }, 2000);
-      } else {
-        setResult({
-          success: false,
-          message: '😢 The creature escaped! Try again or flee.',
-        });
+        setTimeout(() => onCaptured?.(), 1500);
       }
     } catch (err) {
-      setResult({
-        success: false,
-        message: `Error: ${err instanceof Error ? err.message : 'Unknown error'}`,
-      });
+      setResult({ success: false, message: err instanceof Error ? err.message : 'Unknown error' });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleFlee = async () => {
-    if (!encounter) return;
-
-    if (isDemoEncounter) {
-      onFled?.();
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await api.fleeEncounter(encounter.id, spawn.id);
-      onFled?.();
-    } catch (err) {
-      console.error('Failed to flee:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const handleFlee = () => onFled?.();
 
   return (
     <div className="encounter-view">
@@ -123,15 +83,19 @@ export const EncounterView: React.FC<EncounterViewProps> = ({
         {phase === 'action' && (
           <div className="encounter-actions">
             <div className="action-info">
-              <p>A wild <strong>{getAnchorDisplayName(spawn.creature.primaryAnchor)}</strong> appeared!</p>
+              <p>A wild <strong>{getAnchorDisplayName(spawn.creature.primaryAnchor)}</strong> (Lvl {spawn.creature.level}) appeared!</p>
               <div className="capture-info">
                 <div className="info-item">
                   <span className="label">Capture Difficulty:</span>
-                  <span className="value">{captureChance > 70 ? 'Easy' : captureChance > 40 ? 'Medium' : 'Hard'}</span>
+                  <span className="value">{pct > 70 ? 'Easy' : pct > 45 ? 'Medium' : 'Hard'}</span>
                 </div>
                 <div className="info-item">
-                  <span className="label">Base Catch Rate:</span>
-                  <span className="value">{Math.round(captureChance)}%</span>
+                  <span className="label">Catch Rate:</span>
+                  <span className="value">{pct}%</span>
+                </div>
+                <div className="info-item">
+                  <span className="label">Cost per try:</span>
+                  <span className="value">{captureCost} coins (you have {currency})</span>
                 </div>
               </div>
             </div>
@@ -140,16 +104,16 @@ export const EncounterView: React.FC<EncounterViewProps> = ({
               <button
                 className="btn-capture"
                 onClick={handleCapture}
-                disabled={loading}
+                disabled={loading || !canAfford}
               >
-                {loading ? '⏳ Attempting...' : '🎯 Capture'}
+                {loading ? '⏳ Attempting...' : canAfford ? `🎯 Capture (${captureCost})` : 'Not enough coins'}
               </button>
               <button
                 className="btn-flee"
                 onClick={handleFlee}
                 disabled={loading}
               >
-                {loading ? '⏳ Fleeing...' : '💨 Flee'}
+                💨 Flee
               </button>
             </div>
           </div>
@@ -169,9 +133,9 @@ export const EncounterView: React.FC<EncounterViewProps> = ({
                 <button
                   className="btn-capture"
                   onClick={handleCapture}
-                  disabled={loading}
+                  disabled={loading || !canAfford}
                 >
-                  🎯 Try Again
+                  {canAfford ? `🎯 Try Again (${captureCost})` : 'Not enough coins'}
                 </button>
                 <button
                   className="btn-flee"
